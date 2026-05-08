@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>VB 매크로 인터랙티브 에디터</title>
+<style>
+:root {
+  --bg: #1e1e2e;
+  --panel: #2a2a3e;
+  --border: #3a3a4e;
+  --text: #e4e4e7;
+  --muted: #9999aa;
+  --accent: #7aa2f7;
+  --highlight: #f7768e;
+  --good: #9ece6a;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", "Malgun Gothic", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+}
+header {
+  padding: 10px 18px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+header h1 { margin: 0; font-size: 15px; font-weight: 600; }
+header .hint { font-size: 11px; color: var(--muted); }
+main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--border);
+  overflow: hidden;
+}
+.panel {
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+.panel-header {
+  padding: 8px 14px;
+  background: var(--panel);
+  font-size: 12px;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.panel-header .title { font-weight: 600; color: var(--text); }
+#src {
+  flex: 1;
+  background: var(--bg);
+  color: var(--text);
+  border: none;
+  outline: none;
+  padding: 14px 16px;
+  font-family: "JetBrains Mono", "D2Coding", "Consolas", monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  resize: none;
+  white-space: pre;
+  overflow: auto;
+  tab-size: 4;
+}
+#controls {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 14px;
+}
+.empty {
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+  padding: 36px 18px;
+  line-height: 1.7;
+}
+.empty code {
+  background: var(--panel);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 12px;
+}
+.sub-group {
+  margin-bottom: 14px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.sub-header {
+  padding: 8px 12px;
+  background: var(--panel);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  display: flex;
+  justify-content: space-between;
+}
+.sub-header .count { color: var(--muted); font-weight: 400; }
+.widget {
+  padding: 10px 12px;
+  border-top: 1px solid var(--border);
+}
+.widget .label {
+  font-size: 12.5px;
+  margin-bottom: 6px;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.widget .kind {
+  font-size: 10px;
+  background: var(--border);
+  color: var(--muted);
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+.widget .control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.widget input[type="text"],
+.widget input[type="number"],
+.widget select {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 5px 8px;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+}
+.widget input[type="text"] { flex: 1; }
+.widget input[type="text"]:focus,
+.widget input[type="number"]:focus,
+.widget select:focus { border-color: var(--accent); }
+.widget input[type="range"] { flex: 1; accent-color: var(--accent); }
+.widget input[type="number"].compact { width: 90px; }
+.widget .context {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 6px;
+  font-family: "JetBrains Mono", "D2Coding", "Consolas", monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.widget.changed { background: rgba(122, 162, 247, 0.07); }
+.widget.changed .label::before {
+  content: "●";
+  color: var(--accent);
+  font-size: 10px;
+}
+button {
+  background: var(--accent);
+  color: var(--bg);
+  border: none;
+  padding: 5px 11px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+button:hover { filter: brightness(1.1); }
+button.secondary {
+  background: var(--border);
+  color: var(--text);
+}
+button:disabled { opacity: 0.4; cursor: not-allowed; }
+.status {
+  padding: 6px 14px;
+  font-size: 11px;
+  color: var(--muted);
+  background: var(--panel);
+  border-top: 1px solid var(--border);
+}
+.status.error { color: var(--highlight); }
+.status.good { color: var(--good); }
+@media (max-width: 800px) {
+  main { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>VB 매크로 인터랙티브 에디터</h1>
+  <span class="hint">코드를 붙여넣으면 자동으로 위젯이 만들어집니다 · 100% 로컬 동작 · 외부 통신 없음</span>
+</header>
+<main>
+  <section class="panel">
+    <div class="panel-header">
+      <span class="title">VBA 코드</span>
+      <button id="copy-btn">전체 복사</button>
+    </div>
+    <textarea id="src" spellcheck="false" placeholder="여기에 VBA 코드를 붙여넣으세요. 예시는 samples/ 폴더 참고."></textarea>
+    <div class="status" id="status">대기 중 — 코드를 붙여넣으세요</div>
+  </section>
+  <section class="panel">
+    <div class="panel-header">
+      <span class="title">컨트롤</span>
+      <button id="reset-btn" class="secondary" disabled>모두 초기화</button>
+    </div>
+    <div id="controls">
+      <div class="empty">
+        좌측에 VBA 코드를 붙여넣으면<br>
+        편집 가능한 값들이 여기에 자동으로 나타납니다.<br><br>
+        인식 패턴 예시:<br>
+        <code>Const LAST_ROW = 100</code><br>
+        <code>For i = 2 To 100</code><br>
+        <code>Sheets("매출")</code><br>
+        <code>If 금액 &gt; 50000 Then</code>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script type="module">
+"use strict";
+
+// ============================================================
+// 식별자 → 한국어 사전
+// ============================================================
+const TERM_KO = {
+  last: "마지막", end: "끝", final: "최종",
+  max: "최댓값", maximum: "최댓값",
+  min: "최솟값", minimum: "최솟값",
+  threshold: "임계값", limit: "한계", bound: "한계",
+  sheet: "시트", worksheet: "시트", workbook: "통합문서",
+  row: "행", rows: "행",
+  col: "열", cols: "열", column: "열", columns: "열",
+  path: "경로", file: "파일", folder: "폴더", dir: "폴더", directory: "폴더",
+  name: "이름", title: "제목",
+  count: "개수", num: "숫자", number: "숫자",
+  size: "크기", length: "길이", len: "길이",
+  start: "시작", begin: "시작", from: "시작",
+  target: "대상", source: "원본", src: "원본", dest: "대상", destination: "대상",
+  value: "값", val: "값",
+  amount: "금액", price: "가격", cost: "비용",
+  rate: "비율", ratio: "비율", pct: "퍼센트", percent: "퍼센트",
+  date: "날짜", time: "시간",
+  year: "년", month: "월", day: "일",
+  hour: "시", minute: "분", second: "초",
+  url: "주소", link: "링크",
+  id: "ID", key: "키",
+  cell: "셀", range: "범위", area: "영역",
+  total: "합계", sum: "합계",
+  avg: "평균", average: "평균", mean: "평균",
+  default: "기본", first: "첫번째", second: "두번째", third: "세번째",
+  index: "번호", idx: "번호",
+  user: "사용자", admin: "관리자",
+  message: "메시지", msg: "메시지", text: "텍스트", str: "문자열",
+  prefix: "접두사", suffix: "접미사",
+  enable: "사용", enabled: "사용", disable: "사용안함", disabled: "사용안함",
+  flag: "플래그", debug: "디버그", verbose: "상세",
+  delay: "지연", interval: "간격", timeout: "제한시간",
+};
+
+function splitIdent(ident) {
+  if (/[가-힣]/.test(ident)) return [ident];
+  const parts = ident.split(/[_\-]+/).filter(Boolean);
+  const out = [];
+  for (const p of parts) {
+    const sub = p.split(/(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])/).filter(Boolean);
+    out.push(...sub.map(s => s.toLowerCase()));
+  }
+  return out;
+}
+
+function identToKorean(ident) {
+  if (!ident) return "값";
+  const parts = splitIdent(ident);
+  const mapped = parts.map(p => TERM_KO[p] ?? p);
+  return mapped.join(" ");
+}
+
+// ============================================================
+// 토크나이저
+// ============================================================
+const KEYWORDS = new Set([
+  "sub","function","end","dim","const","static","public","private",
+  "if","then","else","elseif","for","to","step","next","while",
+  "wend","do","loop","until","with","set","let","as","byref",
+  "byval","optional","true","false","and","or","not","mod",
+  "rem","exit","call","new","nothing","redim","preserve",
+]);
+
+function tokenize(source) {
+  const tokens = [];
+  const lines = [];
+  let i = 0;
+  let logicalLineStart = 0;
+  let lineTokens = [];
+  let inContinuation = false;
+  const n = source.length;
+
+  function flushLine(end) {
+    lines.push({
+      start: logicalLineStart,
+      end,
+      tokens: lineTokens,
+    });
+    lineTokens = [];
+    logicalLineStart = end + 1;
+  }
+
+  while (i < n) {
+    const c = source[i];
+
+    if (c === "\n") {
+      if (inContinuation) {
+        inContinuation = false;
+        i++;
+        continue;
+      }
+      flushLine(i);
+      i++;
+      continue;
+    }
+    if (c === "\r") { i++; continue; }
+    if (c === " " || c === "\t") { i++; continue; }
+
+    if (c === "'") {
+      const start = i;
+      while (i < n && source[i] !== "\n") i++;
+      const tok = { kind: "comment", start, end: i, raw: source.slice(start, i) };
+      tokens.push(tok); lineTokens.push(tok);
+      continue;
+    }
+
+    if ((c === "R" || c === "r") && lineTokens.filter(t => t.kind !== "comment").length === 0) {
+      const m = source.slice(i).match(/^[Rr][Ee][Mm](\b|\s|$)/);
+      if (m) {
+        const start = i;
+        while (i < n && source[i] !== "\n") i++;
+        const tok = { kind: "comment", start, end: i, raw: source.slice(start, i) };
+        tokens.push(tok); lineTokens.push(tok);
+        continue;
+      }
+    }
+
+    if (c === '"') {
+      const start = i;
+      i++;
+      while (i < n) {
+        if (source[i] === '"') {
+          if (source[i+1] === '"') { i += 2; continue; }
+          i++;
+          break;
+        }
+        if (source[i] === "\n") break;
+        i++;
+      }
+      const tok = { kind: "string", start, end: i, raw: source.slice(start, i) };
+      tokens.push(tok); lineTokens.push(tok);
+      continue;
+    }
+
+    if (c === "&" && (source[i+1] === "H" || source[i+1] === "h")) {
+      const start = i;
+      i += 2;
+      while (i < n && /[0-9A-Fa-f]/.test(source[i])) i++;
+      const tok = { kind: "number", start, end: i, raw: source.slice(start, i), hex: true };
+      tokens.push(tok); lineTokens.push(tok);
+      continue;
+    }
+
+    if (/[0-9]/.test(c)) {
+      const start = i;
+      while (i < n && /[0-9]/.test(source[i])) i++;
+      if (source[i] === "." && /[0-9]/.test(source[i+1])) {
+        i++;
+        while (i < n && /[0-9]/.test(source[i])) i++;
+      }
+      const tok = { kind: "number", start, end: i, raw: source.slice(start, i) };
+      tokens.push(tok); lineTokens.push(tok);
+      continue;
+    }
+
+    if (/[A-Za-z_가-힣]/.test(c)) {
+      if (c === "_") {
+        let j = i + 1;
+        while (j < n && (source[j] === " " || source[j] === "\t")) j++;
+        if (j < n && source[j] === "\n") {
+          inContinuation = true;
+          i = j;
+          continue;
+        }
+      }
+      const start = i;
+      while (i < n && /[A-Za-z0-9_가-힣]/.test(source[i])) i++;
+      const raw = source.slice(start, i);
+      const lower = raw.toLowerCase();
+      let kind = "ident";
+      if (KEYWORDS.has(lower)) kind = "keyword";
+      if (lower === "true" || lower === "false") kind = "bool";
+      const tok = { kind, start, end: i, raw, lower };
+      tokens.push(tok); lineTokens.push(tok);
+      continue;
+    }
+
+    const two = source.slice(i, i+2);
+    if (two === "<=" || two === ">=" || two === "<>") {
+      const tok = { kind: "op", start: i, end: i+2, raw: two };
+      tokens.push(tok); lineTokens.push(tok);
+      i += 2;
+      continue;
+    }
+    if ("=<>+-*/\\&^".includes(c)) {
+      const tok = { kind: "op", start: i, end: i+1, raw: c };
+      tokens.push(tok); lineTokens.push(tok);
+      i++;
+      continue;
+    }
+    if ("(),.:;".includes(c)) {
+      const tok = { kind: "punct", start: i, end: i+1, raw: c };
+      tokens.push(tok); lineTokens.push(tok);
+      i++;
+      continue;
+    }
+    i++;
+  }
+  if (lineTokens.length > 0 || logicalLineStart < n) {
+    flushLine(n);
+  }
+  return { tokens, lines, source };
+}
+
+// ============================================================
+// 라인 분류, Sub 컨텍스트, 주석/어노테이션
+// ============================================================
+function classifyLine(line) {
+  const toks = line.tokens.filter(t => t.kind !== "comment");
+  if (toks.length === 0) return { kind: "blank" };
+  const first = toks[0];
+  const second = toks[1];
+
+  if (first.kind === "keyword") {
+    const k = first.lower;
+    if (k === "sub" || k === "function") return { kind: "subStart" };
+    if ((k === "private" || k === "public" || k === "static") && second?.kind === "keyword") {
+      const k2 = second.lower;
+      if (k2 === "sub" || k2 === "function") return { kind: "subStart" };
+      if (k2 === "const" || k2 === "dim" || k2 === "static") return { kind: "decl", declKind: k2 };
+    }
+    if (k === "end") {
+      if (second?.kind === "keyword") {
+        if (second.lower === "sub" || second.lower === "function") return { kind: "subEnd" };
+        if (second.lower === "if") return { kind: "endIf" };
+        if (second.lower === "with") return { kind: "endWith" };
+      }
+    }
+    if (k === "const" || k === "dim") return { kind: "decl", declKind: k };
+    if (k === "if") return { kind: "if" };
+    if (k === "elseif") return { kind: "elseIf" };
+    if (k === "else") return { kind: "else" };
+    if (k === "for") return { kind: "for" };
+    if (k === "next") return { kind: "next" };
+    if (k === "while" || k === "do") return { kind: "loopStart" };
+    if (k === "wend" || k === "loop") return { kind: "loopEnd" };
+    if (k === "with") return { kind: "with" };
+  }
+  return { kind: "stmt" };
+}
+
+function annotateLines(parsed) {
+  let currentSub = null;
+  for (const line of parsed.lines) {
+    line.classification = classifyLine(line);
+    if (line.classification.kind === "subStart") {
+      const toks = line.tokens.filter(t => t.kind !== "comment");
+      const nameTok = toks.find(t => t.kind === "ident");
+      currentSub = nameTok ? nameTok.raw : "(이름없음)";
+    }
+    line.sub = currentSub;
+    if (line.classification.kind === "subEnd") currentSub = null;
+  }
+
+  for (let i = 0; i < parsed.lines.length; i++) {
+    const line = parsed.lines[i];
+    line.leadingComment = null;
+    line.annotation = null;
+    let prevIdx = i - 1;
+    while (prevIdx >= 0 && parsed.lines[prevIdx].classification.kind === "blank") prevIdx--;
+    if (prevIdx < 0) continue;
+    const prev = parsed.lines[prevIdx];
+    const prevToks = prev.tokens.filter(t => t.kind !== "comment");
+    if (prevToks.length === 0 && prev.tokens.length > 0 && prev.tokens[0].kind === "comment") {
+      const text = prev.tokens[0].raw.replace(/^'\s*|^[Rr][Ee][Mm]\s+/, "").trim();
+      if (text.startsWith("@param")) {
+        line.annotation = parseAnnotation(text);
+        line.leadingComment = text;
+      } else {
+        line.leadingComment = text;
+      }
+    }
+  }
+}
+
+function parseAnnotation(comment) {
+  const rest = comment.slice("@param".length).trim();
+  if (!rest) return null;
+  const parts = rest.split(/\s+/);
+  const ann = { label: parts[0] };
+  for (let i = 1; i < parts.length; i++) {
+    const m = parts[i].match(/^(\w+)=(.+)$/);
+    if (!m) continue;
+    const k = m[1], v = m[2];
+    if (k === "min" || k === "max" || k === "step") {
+      const n = Number(v);
+      if (!Number.isNaN(n)) ann[k] = n;
+    } else if (k === "options") {
+      ann.options = v.split("|");
+    }
+  }
+  return ann;
+}
+
+// ============================================================
+// 추출기
+// ============================================================
+const FUNC_WHITELIST = new Set([
+  "sheets","worksheets","workbooks","range","cells","msgbox","inputbox",
+]);
+
+function extract(parsed) {
+  const out = [];
+  let counter = 0;
+  const nid = () => `ed_${counter++}`;
+
+  for (const line of parsed.lines) {
+    const cls = line.classification;
+    const ctx = {
+      sub: line.sub,
+      line: parsed.source.slice(line.start, line.end),
+      leadingComment: line.leadingComment,
+      annotation: line.annotation,
+    };
+    const toks = line.tokens;
+
+    // R1: Const NAME [As TYPE] = LITERAL
+    if (cls.kind === "decl" && cls.declKind === "const") {
+      const eqIdx = toks.findIndex(t => t.kind === "op" && t.raw === "=");
+      if (eqIdx >= 0) {
+        const lit = pickSingleLiteral(toks, eqIdx + 1, toks.length);
+        if (lit) {
+          const constIdx = toks.findIndex(t => t.kind === "keyword" && t.lower === "const");
+          const nameTok = toks[constIdx + 1]?.kind === "ident" ? toks[constIdx + 1] : null;
+          const ed = makeEditable(nid(), lit, ctx, nameTok?.raw);
+          if (ed) out.push(ed);
+        }
+      }
+      continue;
+    }
+
+    // R3: For <var> = <start> To <end> [Step <s>]
+    if (cls.kind === "for") {
+      const eqIdx = toks.findIndex(t => t.kind === "op" && t.raw === "=");
+      const toIdx = toks.findIndex(t => t.kind === "keyword" && t.lower === "to");
+      const stepIdx = toks.findIndex(t => t.kind === "keyword" && t.lower === "step");
+      const forIdx = toks.findIndex(t => t.kind === "keyword" && t.lower === "for");
+      const varTok = forIdx >= 0 && toks[forIdx + 1]?.kind === "ident" ? toks[forIdx + 1] : null;
+      if (eqIdx >= 0 && toIdx > eqIdx) {
+        const startLit = pickSingleLiteral(toks, eqIdx + 1, toIdx);
+        const endLit = pickSingleLiteral(toks, toIdx + 1, stepIdx >= 0 ? stepIdx : toks.length);
+        if (startLit) {
+          const ed = makeEditable(nid(), startLit, ctx, varTok?.raw, "시작");
+          if (ed) out.push(ed);
+        }
+        if (endLit) {
+          const ed = makeEditable(nid(), endLit, ctx, varTok?.raw, "끝");
+          if (ed) out.push(ed);
+        }
+        if (stepIdx >= 0) {
+          const stepLit = pickSingleLiteral(toks, stepIdx + 1, toks.length);
+          if (stepLit) {
+            const ed = makeEditable(nid(), stepLit, ctx, varTok?.raw, "증가폭");
+            if (ed) out.push(ed);
+          }
+        }
+      }
+    }
+
+    // R4: 비교 연산자의 우변 리터럴 (If/ElseIf 라인에서만)
+    if (cls.kind === "if" || cls.kind === "elseIf") {
+      for (let k = 0; k < toks.length - 1; k++) {
+        const a = toks[k], b = toks[k+1];
+        if (a.kind === "op" && [">","<",">=","<=","=","<>"].includes(a.raw) &&
+            (b.kind === "number" || b.kind === "string" || b.kind === "bool")) {
+          const lhsLabel = findLhsLabel(toks, k);
+          const ed = makeEditable(nid(), b, ctx, lhsLabel, "비교값");
+          if (ed) out.push(ed);
+        }
+      }
+    }
+
+    // R5: 화이트리스트 함수의 리터럴 인자 (모든 라인)
+    extractFunctionArgs(toks, ctx, out, nid);
+
+    // R2 (제한): 단순 할당 ident = literal — leadingComment 또는 annotation이 있을 때만
+    if (cls.kind === "stmt" && (line.leadingComment || line.annotation)) {
+      const t = toks.filter(x => x.kind !== "comment");
+      if (t.length === 3 &&
+          t[0].kind === "ident" &&
+          t[1].kind === "op" && t[1].raw === "=" &&
+          (t[2].kind === "number" || t[2].kind === "string" || t[2].kind === "bool")) {
+        const ed = makeEditable(nid(), t[2], ctx, t[0].raw);
+        if (ed) out.push(ed);
+      }
+    }
+  }
+
+  // 동일 range dedup (R3와 R4가 겹치는 경우 등)
+  const seen = new Set();
+  return out.filter(ed => {
+    const key = `${ed.range[0]}-${ed.range[1]}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function pickSingleLiteral(toks, from, to) {
+  const slice = toks.slice(from, to).filter(t => t.kind !== "comment");
+  if (slice.length === 1) {
+    const t = slice[0];
+    if (t.kind === "number" || t.kind === "string" || t.kind === "bool") return t;
+  }
+  return null;
+}
+
+function findLhsLabel(toks, opIdx) {
+  for (let j = opIdx - 1; j >= 0; j--) {
+    const t = toks[j];
+    if (t.kind === "comment") continue;
+    if (t.kind === "ident") return t.raw;
+    if (t.kind === "punct" && t.raw === ".") continue;
+    if (t.kind === "punct" && t.raw === ")") {
+      let depth = 1;
+      for (let m = j - 1; m >= 0; m--) {
+        const u = toks[m];
+        if (u.kind === "punct" && u.raw === ")") depth++;
+        else if (u.kind === "punct" && u.raw === "(") {
+          depth--;
+          if (depth === 0) {
+            const fn = toks[m-1];
+            return fn?.kind === "ident" ? fn.raw : null;
+          }
+        }
+      }
+      return null;
+    }
+    return null;
+  }
+  return null;
+}
+
+function extractFunctionArgs(toks, ctx, out, nid) {
+  for (let i = 0; i < toks.length - 1; i++) {
+    const a = toks[i], b = toks[i+1];
+    if (a.kind !== "ident" || b.kind !== "punct" || b.raw !== "(") continue;
+    const fname = (a.lower ?? a.raw.toLowerCase());
+    if (!FUNC_WHITELIST.has(fname)) continue;
+    let depth = 1;
+    const args = [[]];
+    let j = i + 2;
+    while (j < toks.length && depth > 0) {
+      const t = toks[j];
+      if (t.kind === "punct" && t.raw === "(") { depth++; args[args.length-1].push(t); }
+      else if (t.kind === "punct" && t.raw === ")") {
+        depth--;
+        if (depth === 0) break;
+        args[args.length-1].push(t);
+      } else if (t.kind === "punct" && t.raw === "," && depth === 1) {
+        args.push([]);
+      } else {
+        args[args.length-1].push(t);
+      }
+      j++;
+    }
+    for (let k = 0; k < args.length; k++) {
+      const arg = args[k].filter(t => t.kind !== "comment");
+      if (arg.length === 1 && (arg[0].kind === "number" || arg[0].kind === "string")) {
+        const label = funcArgLabel(fname, k);
+        const ed = makeEditable(nid(), arg[0], ctx, null, null, label);
+        if (ed) out.push(ed);
+      }
+    }
+    i = j;
+  }
+}
+
+function funcArgLabel(fname, idx) {
+  if (fname === "sheets" || fname === "worksheets") return "시트 이름";
+  if (fname === "workbooks") return "통합문서 이름";
+  if (fname === "range") return "셀 범위";
+  if (fname === "cells") return idx === 0 ? "행 번호" : "열 번호";
+  if (fname === "msgbox") return idx === 0 ? "메시지" : "옵션";
+  if (fname === "inputbox") return idx === 0 ? "안내문" : (idx === 1 ? "제목" : "기본값");
+  return "값";
+}
+
+function makeEditable(id, tok, ctx, hintIdent, suffix, overrideLabel) {
+  if (tok.kind === "number" && tok.hex) return null;
+
+  const kind = tok.kind === "number" ? "number" : tok.kind === "string" ? "string" : "bool";
+  let value;
+  if (kind === "number") {
+    value = Number(tok.raw);
+    if (Number.isNaN(value)) return null;
+  } else if (kind === "string") {
+    value = tok.raw.slice(1, -1).replace(/""/g, '"');
+  } else {
+    value = tok.raw.toLowerCase() === "true";
+  }
+
+  let label;
+  if (ctx.annotation?.label) {
+    label = ctx.annotation.label;
+  } else if (ctx.leadingComment && !ctx.leadingComment.startsWith("@param")) {
+    label = ctx.leadingComment;
+  } else if (overrideLabel) {
+    label = overrideLabel;
+  } else if (hintIdent) {
+    label = identToKorean(hintIdent);
+    if (suffix) label += " " + suffix;
+  } else {
+    label = "값";
+  }
+
+  const hint = {
+    label,
+    widget: kind === "number" ? "slider" : kind === "string" ? "text" : "toggle",
+  };
+  if (ctx.annotation) {
+    if (typeof ctx.annotation.min === "number") hint.min = ctx.annotation.min;
+    if (typeof ctx.annotation.max === "number") hint.max = ctx.annotation.max;
+    if (typeof ctx.annotation.step === "number") hint.step = ctx.annotation.step;
+    if (ctx.annotation.options) hint.options = ctx.annotation.options;
+  }
+
+  return {
+    id, kind,
+    range: [tok.start, tok.end],
+    raw: tok.raw,
+    value,
+    context: ctx,
+    hint,
+  };
+}
+
+// ============================================================
+// 렌더링: 오프셋 머지
+// ============================================================
+function valueToRaw(kind, value) {
+  if (kind === "number") return String(value);
+  if (kind === "string") {
+    const escaped = String(value).replace(/"/g, '""');
+    return `"${escaped}"`;
+  }
+  if (kind === "bool") return value ? "True" : "False";
+  return String(value);
+}
+
+function renderSource(source, editables, edits) {
+  if (editables.length === 0 || edits.size === 0) return source;
+  const sorted = [...editables].sort((a, b) => a.range[0] - b.range[0]);
+  let out = "";
+  let cursor = 0;
+  for (const ed of sorted) {
+    if (ed.range[0] < cursor) continue;
+    out += source.slice(cursor, ed.range[0]);
+    out += edits.has(ed.id) ? edits.get(ed.id) : ed.raw;
+    cursor = ed.range[1];
+  }
+  out += source.slice(cursor);
+  return out;
+}
+
+// ============================================================
+// 상태 + UI
+// ============================================================
+const state = {
+  source: "",
+  editables: [],
+  edits: new Map(),
+};
+
+const $src = document.getElementById("src");
+const $controls = document.getElementById("controls");
+const $status = document.getElementById("status");
+const $copy = document.getElementById("copy-btn");
+const $reset = document.getElementById("reset-btn");
+
+let analyzeTimer = null;
+let suppressInput = false;
+
+function setStatus(msg, kind) {
+  $status.textContent = msg;
+  $status.className = "status" + (kind ? " " + kind : "");
+}
+
+function escapeHtml(s) {
+  return String(s ?? "").replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+  })[c]);
+}
+
+function analyze() {
+  try {
+    const parsed = tokenize(state.source);
+    annotateLines(parsed);
+    state.editables = extract(parsed);
+  } catch (e) {
+    console.error(e);
+    state.editables = [];
+    setStatus("분석 오류: " + e.message, "error");
+    return false;
+  }
+  return true;
+}
+
+function renderControls() {
+  if (!state.source.trim()) {
+    $controls.innerHTML = `<div class="empty">
+      좌측에 VBA 코드를 붙여넣으면<br>
+      편집 가능한 값들이 여기에 자동으로 나타납니다.<br><br>
+      인식 패턴 예시:<br>
+      <code>Const LAST_ROW = 100</code><br>
+      <code>For i = 2 To 100</code><br>
+      <code>Sheets("매출")</code><br>
+      <code>If 금액 &gt; 50000 Then</code>
+    </div>`;
+    return;
+  }
+  if (state.editables.length === 0) {
+    $controls.innerHTML = `<div class="empty">
+      편집 가능한 값을 찾지 못했습니다.<br>
+      <code>Const</code>, <code>For ... To</code>, <code>If x &gt; 값</code>,<br>
+      <code>Sheets("...")</code>, <code>Range("...")</code>, <code>Cells(행, 열)</code>,<br>
+      <code>MsgBox "..."</code> 같은 패턴이 있어야 합니다.<br><br>
+      또는 라인 위에 <code>' @param 라벨 min=.. max=..</code><br>를 붙여 명시할 수 있습니다.
+    </div>`;
+    return;
+  }
+
+  const groups = new Map();
+  for (const ed of state.editables) {
+    const sub = ed.context.sub ?? "(전역 코드)";
+    if (!groups.has(sub)) groups.set(sub, []);
+    groups.get(sub).push(ed);
+  }
+
+  let html = "";
+  for (const [sub, eds] of groups) {
+    html += `<div class="sub-group">
+      <div class="sub-header"><span>${escapeHtml(sub)}</span><span class="count">${eds.length}개</span></div>`;
+    for (const ed of eds) html += renderWidget(ed);
+    html += `</div>`;
+  }
+  $controls.innerHTML = html;
+  for (const ed of state.editables) bindWidget(ed);
+}
+
+function getCurrentValue(ed) {
+  if (!state.edits.has(ed.id)) return ed.value;
+  const raw = state.edits.get(ed.id);
+  if (ed.kind === "number") return Number(raw);
+  if (ed.kind === "string") return raw.slice(1, -1).replace(/""/g, '"');
+  if (ed.kind === "bool") return raw.toLowerCase() === "true";
+}
+
+function renderWidget(ed) {
+  const changed = state.edits.has(ed.id) ? "changed" : "";
+  const value = getCurrentValue(ed);
+  const kindLabel = { number: "숫자", string: "문자열", bool: "참/거짓" }[ed.kind];
+  let control = "";
+
+  if (ed.kind === "number") {
+    const baseMin = ed.hint.min ?? Math.min(0, value - Math.max(10, Math.abs(value)));
+    const baseMax = ed.hint.max ?? Math.max(value * 2, value + 100, 100);
+    const step = ed.hint.step ?? (Number.isInteger(value) ? 1 : 0.1);
+    const showSlider = (baseMax - baseMin) <= 100000;
+    if (showSlider) {
+      control = `<div class="control">
+        <input type="range" data-id="${ed.id}" data-role="range" min="${baseMin}" max="${baseMax}" step="${step}" value="${value}">
+        <input type="number" data-id="${ed.id}" data-role="num" class="compact" value="${value}" step="${step}">
+      </div>`;
+    } else {
+      control = `<div class="control">
+        <input type="number" data-id="${ed.id}" data-role="num" value="${value}" step="${step}">
+      </div>`;
+    }
+  } else if (ed.kind === "string") {
+    if (ed.hint.options) {
+      control = `<div class="control"><select data-id="${ed.id}" data-role="select">${
+        ed.hint.options.map(o => `<option value="${escapeHtml(o)}" ${o === value ? "selected" : ""}>${escapeHtml(o)}</option>`).join("")
+      }</select></div>`;
+    } else {
+      control = `<div class="control"><input type="text" data-id="${ed.id}" data-role="text" value="${escapeHtml(value)}"></div>`;
+    }
+  } else if (ed.kind === "bool") {
+    control = `<div class="control"><label style="display:flex;align-items:center;gap:6px;font-size:13px;">
+      <input type="checkbox" data-id="${ed.id}" data-role="check" ${value ? "checked" : ""}>
+      ${value ? "True (참)" : "False (거짓)"}
+    </label></div>`;
+  }
+
+  return `<div class="widget ${changed}" data-widget-id="${ed.id}">
+    <div class="label">${escapeHtml(ed.hint.label)} <span class="kind">${kindLabel}</span></div>
+    ${control}
+    <div class="context" title="${escapeHtml(ed.context.line)}">${escapeHtml(ed.context.line.trim())}</div>
+  </div>`;
+}
+
+function bindWidget(ed) {
+  const root = $controls.querySelector(`[data-widget-id="${ed.id}"]`);
+  if (!root) return;
+
+  if (ed.kind === "number") {
+    const range = root.querySelector('[data-role="range"]');
+    const num = root.querySelector('[data-role="num"]');
+    const sync = (v) => {
+      if (range) range.value = v;
+      if (num) num.value = v;
+      setEdit(ed, Number(v));
+    };
+    if (range) range.addEventListener("input", () => sync(range.value));
+    if (num) num.addEventListener("input", () => sync(num.value));
+  } else if (ed.kind === "string") {
+    const t = root.querySelector('[data-role="text"]') || root.querySelector('[data-role="select"]');
+    if (t) t.addEventListener("input", () => setEdit(ed, t.value));
+    if (t) t.addEventListener("change", () => setEdit(ed, t.value));
+  } else if (ed.kind === "bool") {
+    const c = root.querySelector('[data-role="check"]');
+    if (c) c.addEventListener("change", () => {
+      setEdit(ed, c.checked);
+      const lbl = c.parentElement;
+      if (lbl) lbl.lastChild.textContent = c.checked ? " True (참)" : " False (거짓)";
+    });
+  }
+}
+
+function setEdit(ed, value) {
+  let same = false;
+  if (ed.kind === "number") same = Number(value) === Number(ed.value);
+  else if (ed.kind === "bool") same = Boolean(value) === Boolean(ed.value);
+  else same = String(value) === String(ed.value);
+
+  if (same) {
+    state.edits.delete(ed.id);
+  } else {
+    state.edits.set(ed.id, valueToRaw(ed.kind, value));
+  }
+
+  const newSrc = renderSource(state.source, state.editables, state.edits);
+  suppressInput = true;
+  $src.value = newSrc;
+  suppressInput = false;
+
+  const root = $controls.querySelector(`[data-widget-id="${ed.id}"]`);
+  if (root) root.classList.toggle("changed", state.edits.has(ed.id));
+
+  $reset.disabled = state.edits.size === 0;
+  setStatus(
+    state.edits.size === 0
+      ? `${state.editables.length}개 항목 추출됨 · 변경 없음`
+      : `${state.editables.length}개 추출 · ${state.edits.size}개 변경됨`,
+    "good"
+  );
+}
+
+$src.addEventListener("input", () => {
+  if (suppressInput) return;
+  if (analyzeTimer) clearTimeout(analyzeTimer);
+  setStatus("분석 중…");
+  analyzeTimer = setTimeout(() => {
+    state.source = $src.value;
+    state.edits.clear();
+    $reset.disabled = true;
+    if (!analyze()) { renderControls(); return; }
+    renderControls();
+    if (!state.source.trim()) {
+      setStatus("대기 중 — 코드를 붙여넣으세요");
+    } else {
+      setStatus(`${state.editables.length}개 항목 추출됨`, "good");
+    }
+  }, 300);
+});
+
+$copy.addEventListener("click", async () => {
+  const text = $src.value;
+  try {
+    await navigator.clipboard.writeText(text);
+    setStatus("클립보드에 복사됨 — Excel VBA 편집기에 붙여넣으세요", "good");
+  } catch {
+    $src.select();
+    try { document.execCommand("copy"); setStatus("복사됨", "good"); }
+    catch { setStatus("복사 실패 — 직접 선택해 복사하세요", "error"); }
+  }
+});
+
+$reset.addEventListener("click", () => {
+  if (state.edits.size === 0) return;
+  state.edits.clear();
+  suppressInput = true;
+  $src.value = state.source;
+  suppressInput = false;
+  renderControls();
+  $reset.disabled = true;
+  setStatus("모든 변경 초기화됨", "good");
+});
+</script>
+</body>
+</html>
