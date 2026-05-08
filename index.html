@@ -5,372 +5,550 @@
 <title>VB 매크로 인터랙티브 에디터</title>
 <style>
 :root {
-  --bg: #0f1419;
-  --bg-2: #161b22;
-  --panel: #1c232c;
-  --panel-2: #232b36;
-  --border: #2d3540;
-  --text: #e6edf3;
-  --muted: #8b949e;
-  --dim: #6e7681;
-  --accent: #58a6ff;
-  --accent-2: #79c0ff;
-  --warn: #f0883e;
-  --good: #3fb950;
-  --danger: #f85149;
+  --bg: #faf6ee;
+  --surface: #ffffff;
+  --surface-2: #f6efe0;
+  --surface-3: #f3ebd9;
+  --border: #e8dec5;
+  --border-soft: #f0e8d2;
+  --text: #4a3a2a;
+  --muted: #8a7d6a;
+  --dim: #b7ad97;
+  --accent: #f6a5b6;
+  --accent-strong: #ec8a9f;
+  --accent-2: #a8d4f0;
+  --good: #8bc189;
+  --warn: #e6a85a;
+  --danger: #ec8a87;
+  --shadow-sm: 0 1px 4px rgba(74, 58, 42, 0.06);
+  --shadow-md: 0 2px 12px rgba(74, 58, 42, 0.08);
+  --shadow-lg: 0 6px 24px rgba(74, 58, 42, 0.1);
 }
 * { box-sizing: border-box; }
 html, body { height: 100%; }
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", "Malgun Gothic", sans-serif;
   background: var(--bg);
   color: var(--text);
+  font-family: "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
   display: flex;
   flex-direction: column;
-  font-size: 14px;
 }
 
 header {
   padding: 14px 22px;
-  background: var(--panel);
-  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border-soft);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  flex-shrink: 0;
 }
-header .brand { display: flex; align-items: baseline; gap: 12px; }
-header h1 { margin: 0; font-size: 16px; font-weight: 700; letter-spacing: -0.2px; }
+header h1 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+  color: var(--text);
+}
 header .tag {
   font-size: 11px;
   color: var(--good);
-  background: rgba(63, 185, 80, 0.12);
-  padding: 2px 8px;
-  border-radius: 10px;
+  background: rgba(139, 193, 137, 0.15);
+  padding: 3px 10px;
+  border-radius: 999px;
   font-weight: 600;
+  margin-left: 10px;
 }
-header .hint { font-size: 12px; color: var(--muted); }
+header .subtitle {
+  font-size: 12px;
+  color: var(--muted);
+}
 
 main {
   flex: 1;
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
-  gap: 1px;
-  background: var(--border);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  gap: 14px;
+  padding: 14px;
   overflow: hidden;
+  min-height: 0;
 }
+
 .panel {
-  background: var(--bg);
+  background: var(--surface);
+  border-radius: 18px;
+  box-shadow: var(--shadow-md);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  min-width: 0;
+  min-height: 0;
 }
 .panel-header {
-  padding: 10px 16px;
-  background: var(--panel);
-  font-size: 12px;
-  color: var(--muted);
-  border-bottom: 1px solid var(--border);
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border-soft);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 8px;
-  min-height: 42px;
-}
-.panel-header .title {
   font-weight: 700;
+  font-size: 14px;
   color: var(--text);
-  font-size: 13px;
-  letter-spacing: -0.1px;
+  flex-shrink: 0;
+  background: var(--surface);
+}
+.panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 16px;
+  background: var(--bg);
+  min-height: 0;
+}
+.panel-body.code-body {
+  padding: 0;
+  background: var(--surface);
 }
 
-/* 좌측: 코드 패널 */
 #summary {
-  background: var(--bg-2);
-  border-bottom: 1px solid var(--border);
-  padding: 12px 16px;
-  font-size: 13px;
-  line-height: 1.65;
-  max-height: 38%;
+  padding: 14px 16px;
+  background: var(--bg);
+  max-height: 36%;
   overflow-y: auto;
+  border-bottom: 1px solid var(--border-soft);
+  flex-shrink: 0;
 }
-#summary .empty-summary {
-  color: var(--dim);
-  font-size: 12px;
+.summary-empty {
   text-align: center;
-  padding: 14px 0;
-}
-#summary .summary-card {
-  margin-bottom: 10px;
-  padding-bottom: 10px;
-  border-bottom: 1px dashed var(--border);
-}
-#summary .summary-card:last-child {
-  border-bottom: none;
-  margin-bottom: 0;
-  padding-bottom: 0;
-}
-#summary .sub-title {
-  font-weight: 700;
-  color: var(--accent-2);
+  color: var(--muted);
   font-size: 13px;
-  margin-bottom: 4px;
+  padding: 18px 8px;
 }
-#summary .sub-title .ko {
-  color: var(--muted);
-  font-weight: 400;
-  font-size: 12px;
-  margin-left: 6px;
+.summary-card {
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  box-shadow: var(--shadow-sm);
 }
-#summary .sub-desc {
-  color: var(--muted);
-  font-size: 12px;
-  font-style: italic;
+.summary-card:last-child { margin-bottom: 0; }
+.summary-card .one-liner {
+  font-size: 14.5px;
+  font-weight: 700;
   margin-bottom: 6px;
-}
-#summary ul {
-  margin: 4px 0 0;
-  padding-left: 18px;
   color: var(--text);
+  letter-spacing: -0.2px;
 }
-#summary ul li {
+.summary-card .desc {
   font-size: 12.5px;
-  margin-bottom: 2px;
-  line-height: 1.55;
+  color: var(--muted);
+  margin-bottom: 10px;
+  font-style: italic;
+  line-height: 1.6;
 }
-#summary ul li .src {
-  color: var(--dim);
-  font-family: "JetBrains Mono", "D2Coding", "Consolas", monospace;
+.summary-card ul {
+  list-style: none;
+  padding: 0;
+  margin: 6px 0 0;
+}
+.summary-card ul li {
+  font-size: 12.5px;
+  padding: 5px 0;
+  color: var(--text);
+  border-bottom: 1px dashed var(--border-soft);
+}
+.summary-card ul li:last-child { border-bottom: none; }
+.summary-card ul li::before {
+  content: "·";
+  color: var(--accent);
+  font-weight: 800;
+  margin-right: 8px;
+}
+.summary-card .meta {
+  margin-top: 8px;
   font-size: 11px;
-  margin-left: 4px;
+  color: var(--dim);
 }
 
 #src {
   flex: 1;
-  background: var(--bg);
+  width: 100%;
+  background: var(--surface);
   color: var(--text);
   border: none;
   outline: none;
-  padding: 14px 16px;
-  font-family: "JetBrains Mono", "D2Coding", "Consolas", monospace;
+  padding: 14px 18px;
+  font-family: "D2Coding", "JetBrains Mono", "Fira Code", "Consolas", monospace;
   font-size: 13px;
-  line-height: 1.65;
+  line-height: 1.75;
   resize: none;
   white-space: pre;
   overflow: auto;
   tab-size: 4;
+  min-height: 0;
 }
 
-/* 우측: 컨트롤 패널 */
-#controls {
-  flex: 1;
-  overflow-y: auto;
-  padding: 14px 16px;
-}
 .notice {
-  background: rgba(88, 166, 255, 0.08);
-  border: 1px solid rgba(88, 166, 255, 0.25);
-  color: var(--text);
-  padding: 10px 12px;
-  border-radius: 6px;
-  font-size: 12.5px;
-  line-height: 1.6;
+  background: rgba(168, 212, 240, 0.18);
+  border: 1px solid rgba(168, 212, 240, 0.4);
+  border-radius: 14px;
+  padding: 12px 14px;
   margin-bottom: 14px;
+  font-size: 12.5px;
+  color: var(--text);
+  line-height: 1.65;
 }
-.notice b { color: var(--accent-2); }
-.notice.warn {
-  background: rgba(240, 136, 62, 0.07);
-  border-color: rgba(240, 136, 62, 0.3);
-}
-.notice.warn b { color: var(--warn); }
+.notice b { color: #4a90c8; }
 
-.empty {
-  color: var(--muted);
-  font-size: 13px;
+.empty-state {
+  padding: 40px 20px;
   text-align: center;
-  padding: 40px 18px;
-  line-height: 1.7;
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.9;
 }
-.empty code {
-  background: var(--panel);
-  padding: 1px 6px;
-  border-radius: 3px;
-  font-size: 12px;
-  color: var(--accent-2);
+.empty-state .big {
+  font-size: 28px;
+  margin-bottom: 14px;
+  color: var(--accent);
+  font-weight: 800;
 }
 
-.sub-group {
+.group {
   margin-bottom: 16px;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  overflow: hidden;
 }
-.sub-header {
-  padding: 10px 14px;
-  background: var(--panel-2);
+.group-title {
+  margin: 0 0 8px;
   font-size: 12px;
   font-weight: 700;
-  color: var(--accent-2);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid var(--border);
-}
-.sub-header .count {
   color: var(--muted);
-  font-weight: 400;
-  font-size: 11px;
+  letter-spacing: 0.3px;
+  padding-left: 6px;
+  text-transform: none;
+}
+.group-title .count {
+  font-weight: 500;
+  color: var(--dim);
+  margin-left: 6px;
 }
 
-.widget {
-  padding: 12px 14px;
-  border-top: 1px solid var(--border);
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: 14px;
+  padding: 13px 15px;
+  margin-bottom: 9px;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.15s, transform 0.1s;
 }
-.widget:first-child { border-top: none; }
-.widget .label {
-  font-size: 13px;
-  margin-bottom: 8px;
-  color: var(--text);
+.card:hover { box-shadow: var(--shadow-md); }
+.card.changed {
+  border-left: 4px solid var(--accent);
+  padding-left: 12px;
+  background: linear-gradient(to right, rgba(246, 165, 182, 0.08), var(--surface) 40%);
+}
+
+.setting-label {
+  font-weight: 700;
+  font-size: 13.5px;
+  margin-bottom: 9px;
   display: flex;
   align-items: center;
   gap: 8px;
-  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.1px;
 }
-.widget .label .kind {
+.setting-label .badge {
   font-size: 10px;
-  background: var(--border);
+  background: var(--surface-3);
   color: var(--muted);
-  padding: 2px 7px;
-  border-radius: 10px;
+  padding: 2px 8px;
+  border-radius: 999px;
   font-weight: 500;
 }
-.widget .label .changed-mark {
-  font-size: 10px;
-  color: var(--accent);
+.setting-label .changed-chip {
   margin-left: auto;
+  font-size: 11px;
+  color: var(--accent-strong);
+  font-weight: 700;
 }
-.widget .label .changed-mark.hidden { display: none; }
-.widget .control {
+
+.number-stepper {
   display: flex;
+  align-items: stretch;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--surface);
+  transition: border-color 0.15s;
+}
+.number-stepper:focus-within { border-color: var(--accent); }
+.stepper-btn {
+  background: var(--surface-2);
+  border: none;
+  width: 38px;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.1s;
+}
+.stepper-btn:hover { background: var(--surface-3); }
+.stepper-btn:active { background: var(--accent); color: white; }
+.number-stepper input[type="number"] {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  text-align: center;
+  font-size: 14.5px;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--text);
+  padding: 8px 4px;
+  -moz-appearance: textfield;
+  min-width: 0;
+}
+.number-stepper input[type="number"]::-webkit-outer-spin-button,
+.number-stepper input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.text-input {
+  width: 100%;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  padding: 9px 14px;
+  font-family: inherit;
+  font-size: 13.5px;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.15s;
+}
+.text-input:focus { border-color: var(--accent); }
+select.text-input {
+  cursor: pointer;
+  appearance: none;
+  background: var(--surface) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path fill='none' stroke='%238a7d6a' stroke-width='2' d='M1 1l5 5 5-5'/></svg>") no-repeat right 14px center;
+  padding-right: 34px;
+}
+
+.toggle {
+  display: inline-flex;
   align-items: center;
   gap: 10px;
+  cursor: pointer;
+  user-select: none;
 }
-.widget input[type="text"],
-.widget input[type="number"],
-.widget select {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  color: var(--text);
-  padding: 7px 10px;
-  border-radius: 5px;
-  font-family: inherit;
-  font-size: 13px;
-  outline: none;
+.toggle input { display: none; }
+.toggle-track {
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--surface-3);
+  position: relative;
+  transition: background 0.15s;
+  flex-shrink: 0;
 }
-.widget input[type="text"] { flex: 1; }
-.widget input[type="text"]:focus,
-.widget input[type="number"]:focus,
-.widget select:focus { border-color: var(--accent); }
-.widget input[type="range"] {
-  flex: 1;
-  accent-color: var(--accent);
+.toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+  transition: transform 0.18s ease;
 }
-.widget input[type="number"].compact { width: 100px; flex: 0 0 100px; }
-.widget .context {
-  font-size: 11px;
-  color: var(--dim);
+.toggle input:checked + .toggle-track { background: var(--accent); }
+.toggle input:checked + .toggle-track .toggle-thumb { transform: translateX(20px); }
+.toggle-text { font-size: 13px; color: var(--text); font-weight: 500; }
+
+.diff-chip {
   margin-top: 8px;
-  font-family: "JetBrains Mono", "D2Coding", "Consolas", monospace;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  padding-top: 6px;
-  border-top: 1px dashed var(--border);
+  font-size: 11.5px;
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--surface-2);
+  padding: 3px 10px;
+  border-radius: 999px;
 }
-.widget .original {
+.diff-chip .ov { color: var(--dim); text-decoration: line-through; }
+.diff-chip .nv { color: var(--accent-strong); font-weight: 700; }
+.diff-chip .arr { color: var(--dim); }
+
+.setting-context {
+  margin-top: 9px;
+  font-size: 11px;
+}
+.setting-context summary {
+  color: var(--muted);
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+}
+.setting-context summary::-webkit-details-marker { display: none; }
+.setting-context summary::before {
+  content: "▸";
+  font-size: 9px;
+  transition: transform 0.15s;
+  color: var(--dim);
+}
+.setting-context[open] summary::before { transform: rotate(90deg); }
+.setting-context code {
+  display: block;
+  margin-top: 6px;
+  padding: 8px 11px;
+  background: var(--surface-2);
+  border-radius: 8px;
+  font-family: "D2Coding", "JetBrains Mono", "Consolas", monospace;
+  font-size: 11px;
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-all;
+  border-left: 3px solid var(--border);
+  line-height: 1.6;
+}
+
+.advanced {
+  margin-top: 4px;
+  background: var(--surface-2);
+  border-radius: 14px;
+  padding: 14px 16px;
+  border: 1px dashed var(--border);
+}
+.advanced > summary {
+  cursor: pointer;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+  user-select: none;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.advanced > summary::-webkit-details-marker { display: none; }
+.advanced > summary::before {
+  content: "▸";
+  transition: transform 0.18s;
+  color: var(--muted);
+  font-size: 11px;
+}
+.advanced[open] > summary::before { transform: rotate(90deg); }
+.advanced > summary .hint {
+  font-weight: 400;
   font-size: 11px;
   color: var(--muted);
-  margin-top: 4px;
+  margin-left: 6px;
 }
-.widget .original .ov { color: var(--dim); text-decoration: line-through; }
-.widget .original .nv { color: var(--accent-2); font-weight: 600; }
-.widget.changed { background: rgba(88, 166, 255, 0.04); }
+.advanced .group:first-of-type { margin-top: 14px; }
+.advanced .group-title { padding-left: 4px; }
 
-button {
+button.primary {
   background: var(--accent);
-  color: #0d1117;
+  color: white;
   border: none;
-  padding: 7px 14px;
-  border-radius: 5px;
-  font-size: 12px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  font-size: 12.5px;
   font-weight: 700;
   cursor: pointer;
   font-family: inherit;
-  transition: filter 0.1s;
+  box-shadow: var(--shadow-sm);
+  transition: background 0.1s, transform 0.08s, box-shadow 0.1s;
 }
-button:hover { filter: brightness(1.1); }
+button.primary:hover { background: var(--accent-strong); box-shadow: var(--shadow-md); }
+button.primary:active { transform: scale(0.97); }
+button.primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
 button.secondary {
-  background: var(--border);
+  background: var(--surface);
   color: var(--text);
-}
-button:disabled { opacity: 0.4; cursor: not-allowed; }
-
-.status {
+  border: 1.5px solid var(--border);
   padding: 7px 16px;
-  font-size: 11px;
-  color: var(--muted);
-  background: var(--panel);
-  border-top: 1px solid var(--border);
-  min-height: 28px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.1s;
 }
-.status.error { color: var(--danger); }
-.status.good { color: var(--good); }
+button.secondary:hover { background: var(--surface-2); }
+button.secondary:disabled { opacity: 0.4; cursor: not-allowed; }
 
-@media (max-width: 850px) {
-  main { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
-  #summary { max-height: 30%; }
+.status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 16px;
+  background: var(--surface);
+  border-top: 1px solid var(--border-soft);
+  font-size: 11.5px;
+  color: var(--muted);
+  flex-shrink: 0;
+  gap: 10px;
+}
+.status-bar .info { flex: 1; }
+.status-bar .info.good { color: var(--good); font-weight: 600; }
+.status-bar .info.error { color: var(--danger); font-weight: 600; }
+
+@media (max-width: 880px) {
+  main {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+  }
 }
 </style>
 </head>
 <body>
 <header>
-  <div class="brand">
+  <div style="display:flex;align-items:baseline;">
     <h1>VB 매크로 인터랙티브 에디터</h1>
-    <span class="tag">100% 로컬 · 외부 통신 없음</span>
+    <span class="tag">100% 로컬</span>
   </div>
-  <span class="hint">코드를 붙여넣으면 한국어 요약과 안전한 설정값을 자동으로 보여줍니다</span>
+  <span class="subtitle">코드 붙여넣기 → 한국어 설명과 안전한 설정값을 자동으로 보여드려요</span>
 </header>
+
 <main>
   <section class="panel">
     <div class="panel-header">
-      <span class="title">코드 요약</span>
+      <span>코드 요약과 원본</span>
+      <button id="copy-btn" class="primary">전체 복사</button>
     </div>
     <div id="summary">
-      <div class="empty-summary">아래에 VBA 코드를 붙여넣으면 여기에 한국어 요약이 나타납니다</div>
+      <div class="summary-empty">아래에 VBA 코드를 붙여넣으면 여기에 한국어 요약이 나타나요</div>
     </div>
-    <div class="panel-header" style="border-top: 1px solid var(--border);">
-      <span class="title">VBA 코드</span>
-      <button id="copy-btn">전체 복사</button>
+    <textarea id="src" spellcheck="false" placeholder="여기에 VBA 코드를 붙여 넣으세요"></textarea>
+    <div class="status-bar">
+      <span id="status" class="info">대기 중 — 코드를 붙여넣으세요</span>
     </div>
-    <textarea id="src" spellcheck="false" placeholder="여기에 VBA 코드를 붙여넣으세요."></textarea>
-    <div class="status" id="status">대기 중 — 코드를 붙여넣으세요</div>
   </section>
+
   <section class="panel">
     <div class="panel-header">
-      <span class="title">설정 (안전한 값만 표시)</span>
+      <span>설정값 <span style="font-weight:400;color:var(--muted);font-size:11px;margin-left:4px;">바꾸면 왼쪽 코드가 자동으로 갱신돼요</span></span>
       <button id="reset-btn" class="secondary" disabled>모두 초기화</button>
     </div>
-    <div id="controls">
-      <div class="empty">
-        좌측에 VBA 코드를 붙여넣으면<br>
-        편집 가능한 값들이 여기에 자동으로 나타납니다.<br><br>
-        인식 패턴 예시:<br>
-        <code>Const LAST_ROW = 100</code><br>
-        <code>For i = 14 To 100</code><br>
-        <code>Sheets("매출")</code>
+    <div id="controls" class="panel-body">
+      <div class="empty-state">
+        <div class="big">·</div>
+        아직 코드를 붙여넣지 않으셨네요.<br>
+        왼쪽 칸에 매크로 코드를 붙여 넣으면<br>
+        바꿀 수 있는 값들을 자동으로 찾아 보여드릴게요.
       </div>
     </div>
   </section>
@@ -380,14 +558,14 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 "use strict";
 
 // ============================================================
-// 식별자 → 한국어 사전
+// 식별자 → 한국어 사전 (친근 존쓰임말 명사형)
 // ============================================================
 const TERM_KO = {
   last: "마지막", end: "끝", final: "최종",
   max: "최댓값", maximum: "최댓값",
   min: "최솟값", minimum: "최솟값",
   threshold: "임계값", limit: "한계", bound: "한계",
-  sheet: "시트", worksheet: "시트", workbook: "통합문서",
+  sheet: "시트", worksheet: "시트", workbook: "통합문서", workbooks: "통합문서",
   row: "행", rows: "행",
   col: "열", cols: "열", column: "열", columns: "열",
   path: "경로", file: "파일", folder: "폴더", dir: "폴더", directory: "폴더",
@@ -412,8 +590,8 @@ const TERM_KO = {
   user: "사용자", admin: "관리자",
   message: "메시지", msg: "메시지", text: "텍스트", str: "문자열",
   prefix: "접두사", suffix: "접미사",
-  enable: "사용", enabled: "사용", disable: "사용안함", disabled: "사용안함",
-  flag: "플래그", debug: "디버그", verbose: "상세",
+  enable: "켜기", enabled: "켜짐", disable: "끄기", disabled: "꺼짐",
+  flag: "표시", debug: "디버그", verbose: "상세",
   delay: "지연", interval: "간격", timeout: "제한시간",
   import: "가져오기", export: "내보내기",
   copy: "복사", paste: "붙여넣기", move: "이동",
@@ -421,9 +599,17 @@ const TERM_KO = {
   found: "찾은", search: "검색", find: "찾기",
   bank: "은행", statement: "명세서",
   pass: "합격", fail: "실패", report: "보고서",
+  citi: "시티", krw: "원화", usd: "달러", eur: "유로", jpy: "엔화",
+  rimowa: "리모와",
+  read: "읽기", write: "쓰기", only: "전용",
+  password: "비밀번호", change: "변경", changes: "변경 사항",
+  active: "활성", inactive: "비활성",
+  alert: "알림", warning: "경고", info: "정보", error: "오류",
+  data: "데이터", arr: "배열", array: "배열", list: "목록",
 };
 
 function splitIdent(ident) {
+  if (!ident) return [];
   if (/[가-힣]/.test(ident)) return [ident];
   const parts = ident.split(/[_\-]+/).filter(Boolean);
   const out = [];
@@ -435,14 +621,64 @@ function splitIdent(ident) {
 }
 
 function identToKorean(ident) {
-  if (!ident) return "값";
+  if (!ident) return null;
+  // 단일 문자 변수는 라벨로 부적절 (i, j, k, m, n)
+  if (/^[a-zA-Z]$/.test(ident)) return null;
   const parts = splitIdent(ident);
+  if (parts.length === 0) return null;
   const mapped = parts.map(p => TERM_KO[p] ?? p);
   return mapped.join(" ");
 }
 
 // ============================================================
-// 토크나이저
+// 함수 / 명명 인자 라벨 사전
+// ============================================================
+const FUNC_LABELS = {
+  sheets:     ["시트 이름"],
+  worksheets: ["시트 이름"],
+  workbooks:  ["통합문서 이름"],
+  range:      ["셀 범위"],
+  cells:      ["행 번호", "열 번호"],
+  msgbox:     ["알림 메시지"],
+  inputbox:   ["안내문", "제목", "기본값"],
+  dir:        ["찾을 파일 이름"],
+  instr:      [null, null, "찾을 단어"],
+  find:       ["찾을 값"],
+  findnext:   ["찾을 값"],
+  replace:    ["찾을 값", "바꿀 값"],
+  open:       ["파일 경로"],
+  mid:        [null, "시작 위치", "잘라낼 길이"],
+  left:       [null, "잘라낼 길이"],
+  right:      [null, "잘라낼 길이"],
+};
+
+const NAMED_ARG_LABELS = {
+  filename:    "파일 경로",
+  filepath:    "파일 경로",
+  path:        "경로",
+  readonly:    "읽기 전용으로 열기",
+  password:    "비밀번호",
+  destination: "대상 위치",
+  source:      "원본 위치",
+  savechanges: "변경 사항 저장",
+  prompt:      "안내문",
+  title:       "제목",
+  default:     "기본값",
+  buttons:     "버튼",
+  what:        "찾을 값",
+  replacement: "바꿀 값",
+  after:       "이후 위치",
+  matchcase:   "대소문자 구분",
+  lookat:      "찾기 방식",
+};
+
+const SAFE_FUNCS = new Set([
+  "sheets","worksheets","workbooks","range","dir","instr","find","findnext",
+  "replace","msgbox","inputbox","open",
+]);
+
+// ============================================================
+// 토크나이저 (변경 없음)
 // ============================================================
 const KEYWORDS = new Set([
   "sub","function","end","dim","const","static","public","private",
@@ -469,16 +705,12 @@ function tokenize(source) {
 
   while (i < n) {
     const c = source[i];
-
     if (c === "\n") {
       if (inContinuation) { inContinuation = false; i++; continue; }
-      flushLine(i);
-      i++;
-      continue;
+      flushLine(i); i++; continue;
     }
     if (c === "\r") { i++; continue; }
     if (c === " " || c === "\t") { i++; continue; }
-
     if (c === "'") {
       const start = i;
       while (i < n && source[i] !== "\n") i++;
@@ -486,7 +718,6 @@ function tokenize(source) {
       tokens.push(tok); lineTokens.push(tok);
       continue;
     }
-
     if ((c === "R" || c === "r") && lineTokens.filter(t => t.kind !== "comment").length === 0) {
       const m = source.slice(i).match(/^[Rr][Ee][Mm](\b|\s|$)/);
       if (m) {
@@ -497,54 +728,36 @@ function tokenize(source) {
         continue;
       }
     }
-
     if (c === '"') {
-      const start = i;
-      i++;
+      const start = i; i++;
       while (i < n) {
-        if (source[i] === '"') {
-          if (source[i+1] === '"') { i += 2; continue; }
-          i++;
-          break;
-        }
+        if (source[i] === '"') { if (source[i+1] === '"') { i += 2; continue; } i++; break; }
         if (source[i] === "\n") break;
         i++;
       }
       const tok = { kind: "string", start, end: i, raw: source.slice(start, i) };
-      tokens.push(tok); lineTokens.push(tok);
-      continue;
+      tokens.push(tok); lineTokens.push(tok); continue;
     }
-
     if (c === "&" && (source[i+1] === "H" || source[i+1] === "h")) {
-      const start = i;
-      i += 2;
+      const start = i; i += 2;
       while (i < n && /[0-9A-Fa-f]/.test(source[i])) i++;
       const tok = { kind: "number", start, end: i, raw: source.slice(start, i), hex: true };
-      tokens.push(tok); lineTokens.push(tok);
-      continue;
+      tokens.push(tok); lineTokens.push(tok); continue;
     }
-
     if (/[0-9]/.test(c)) {
       const start = i;
       while (i < n && /[0-9]/.test(source[i])) i++;
       if (source[i] === "." && /[0-9]/.test(source[i+1])) {
-        i++;
-        while (i < n && /[0-9]/.test(source[i])) i++;
+        i++; while (i < n && /[0-9]/.test(source[i])) i++;
       }
       const tok = { kind: "number", start, end: i, raw: source.slice(start, i) };
-      tokens.push(tok); lineTokens.push(tok);
-      continue;
+      tokens.push(tok); lineTokens.push(tok); continue;
     }
-
     if (/[A-Za-z_가-힣]/.test(c)) {
       if (c === "_") {
         let j = i + 1;
         while (j < n && (source[j] === " " || source[j] === "\t")) j++;
-        if (j < n && source[j] === "\n") {
-          inContinuation = true;
-          i = j;
-          continue;
-        }
+        if (j < n && source[j] === "\n") { inContinuation = true; i = j; continue; }
       }
       const start = i;
       while (i < n && /[A-Za-z0-9_가-힣]/.test(source[i])) i++;
@@ -554,28 +767,20 @@ function tokenize(source) {
       if (KEYWORDS.has(lower)) kind = "keyword";
       if (lower === "true" || lower === "false") kind = "bool";
       const tok = { kind, start, end: i, raw, lower };
-      tokens.push(tok); lineTokens.push(tok);
-      continue;
+      tokens.push(tok); lineTokens.push(tok); continue;
     }
-
     const two = source.slice(i, i+2);
     if (two === "<=" || two === ">=" || two === "<>" || two === ":=") {
       const tok = { kind: two === ":=" ? "punct" : "op", start: i, end: i+2, raw: two };
-      tokens.push(tok); lineTokens.push(tok);
-      i += 2;
-      continue;
+      tokens.push(tok); lineTokens.push(tok); i += 2; continue;
     }
     if ("=<>+-*/\\&^".includes(c)) {
       const tok = { kind: "op", start: i, end: i+1, raw: c };
-      tokens.push(tok); lineTokens.push(tok);
-      i++;
-      continue;
+      tokens.push(tok); lineTokens.push(tok); i++; continue;
     }
     if ("(),.:;".includes(c)) {
       const tok = { kind: "punct", start: i, end: i+1, raw: c };
-      tokens.push(tok); lineTokens.push(tok);
-      i++;
-      continue;
+      tokens.push(tok); lineTokens.push(tok); i++; continue;
     }
     i++;
   }
@@ -584,14 +789,12 @@ function tokenize(source) {
 }
 
 // ============================================================
-// 라인 분류, Sub 컨텍스트, 주석/어노테이션
+// 라인 분류 + 컨텍스트 부착
 // ============================================================
 function classifyLine(line) {
   const toks = line.tokens.filter(t => t.kind !== "comment");
   if (toks.length === 0) return { kind: "blank" };
-  const first = toks[0];
-  const second = toks[1];
-
+  const first = toks[0]; const second = toks[1];
   if (first.kind === "keyword") {
     const k = first.lower;
     if (k === "sub" || k === "function") return { kind: "subStart" };
@@ -600,12 +803,10 @@ function classifyLine(line) {
       if (k2 === "sub" || k2 === "function") return { kind: "subStart" };
       if (k2 === "const" || k2 === "dim" || k2 === "static") return { kind: "decl", declKind: k2 };
     }
-    if (k === "end") {
-      if (second?.kind === "keyword") {
-        if (second.lower === "sub" || second.lower === "function") return { kind: "subEnd" };
-        if (second.lower === "if") return { kind: "endIf" };
-        if (second.lower === "with") return { kind: "endWith" };
-      }
+    if (k === "end" && second?.kind === "keyword") {
+      if (second.lower === "sub" || second.lower === "function") return { kind: "subEnd" };
+      if (second.lower === "if") return { kind: "endIf" };
+      if (second.lower === "with") return { kind: "endWith" };
     }
     if (k === "const" || k === "dim") return { kind: "decl", declKind: k };
     if (k === "if") return { kind: "if" };
@@ -622,21 +823,25 @@ function classifyLine(line) {
 
 function annotateLines(parsed) {
   let currentSub = null;
+  let currentSection = null;
   for (const line of parsed.lines) {
     line.classification = classifyLine(line);
     if (line.classification.kind === "subStart") {
       const toks = line.tokens.filter(t => t.kind !== "comment");
       const nameTok = toks.find(t => t.kind === "ident");
       currentSub = nameTok ? nameTok.raw : "(이름없음)";
+      currentSection = null;
     }
     line.sub = currentSub;
-    if (line.classification.kind === "subEnd") currentSub = null;
+    if (line.classification.kind === "subEnd") { currentSub = null; currentSection = null; }
   }
 
   for (let i = 0; i < parsed.lines.length; i++) {
     const line = parsed.lines[i];
     line.leadingComment = null;
     line.annotation = null;
+    line.sectionHeader = null;
+
     let prevIdx = i - 1;
     while (prevIdx >= 0 && parsed.lines[prevIdx].classification.kind === "blank") prevIdx--;
     if (prevIdx < 0) continue;
@@ -644,16 +849,42 @@ function annotateLines(parsed) {
     const prevToks = prev.tokens.filter(t => t.kind !== "comment");
     if (prevToks.length === 0 && prev.tokens.length > 0 && prev.tokens[0].kind === "comment") {
       const text = prev.tokens[0].raw.replace(/^'\s*|^[Rr][Ee][Mm]\s+/, "").trim();
-      // ===== 또는 ---- 같은 장식선은 건너뜀
-      if (/^[=\-_*#]{3,}/.test(text) || text.length < 1) continue;
       if (text.startsWith("@param")) {
         line.annotation = parseAnnotation(text);
         line.leadingComment = text;
       } else {
-        line.leadingComment = text;
+        const cleaned = cleanCommentText(text);
+        if (cleaned) {
+          if (isSectionHeader(text)) line.sectionHeader = cleaned;
+          else line.leadingComment = cleaned;
+        }
       }
     }
   }
+
+  // 가장 가까운 섹션 헤더(앞쪽으로) 전파
+  let lastSection = null;
+  for (const line of parsed.lines) {
+    if (line.sectionHeader) lastSection = line.sectionHeader;
+    if (!line.section) line.section = lastSection;
+    if (line.classification.kind === "subStart" || line.classification.kind === "subEnd") lastSection = null;
+  }
+}
+
+function isSectionHeader(text) {
+  // ===== 1. 제목 =====, ----- 제목 -----, ##### 제목 #####
+  return /^[=\-_*#~]{2,}/.test(text) || /[=\-_*#~]{2,}\s*$/.test(text) ||
+         /^\d+[\.\)]\s+/.test(text);
+}
+
+function cleanCommentText(text) {
+  if (!text) return null;
+  let t = text.trim();
+  // 양쪽 장식 제거: ===== 1. 제목 =====
+  t = t.replace(/^[=\-_*#~]{2,}\s*/, "").replace(/\s*[=\-_*#~]{2,}$/, "").trim();
+  // 앞 번호 제거: "1. "
+  t = t.replace(/^\d+[\.\)]\s+/, "").trim();
+  return t || null;
 }
 
 function parseAnnotation(comment) {
@@ -666,140 +897,59 @@ function parseAnnotation(comment) {
     if (!m) continue;
     const k = m[1], v = m[2];
     if (k === "min" || k === "max" || k === "step") {
-      const n = Number(v);
-      if (!Number.isNaN(n)) ann[k] = n;
+      const n = Number(v); if (!Number.isNaN(n)) ann[k] = n;
     } else if (k === "options") ann.options = v.split("|");
   }
   return ann;
 }
 
 // ============================================================
-// 추출기 (보수적 휴리스틱)
+// 추출기 (대폭 확장)
 // ============================================================
-const FUNC_WHITELIST = new Set([
-  "sheets","worksheets","workbooks","range","cells","msgbox","inputbox",
-]);
-
-// "코드 로직"으로 보이는 값은 추출 제외
 function isLikelyCodeLogic(tok) {
   if (tok.kind === "string") {
     const v = tok.raw.slice(1, -1);
-    if (v === "" || v === " ") return true;          // 빈/공백 문자열
+    if (v === "" || v === " " || v === "\\") return true;
   }
   if (tok.kind === "number") {
+    if (tok.hex) return true;
     const n = Number(tok.raw);
-    if (n === 0 || n === 1 || n === -1) return true; // 가드/플래그
+    if (n === 0 || n === 1 || n === -1) return true;
   }
   return false;
 }
 
-function extract(parsed) {
+function findConcatStrings(toks) {
   const out = [];
-  let counter = 0;
-  const nid = () => `ed_${counter++}`;
-
-  for (const line of parsed.lines) {
-    const cls = line.classification;
-    const ctx = {
-      sub: line.sub,
-      line: parsed.source.slice(line.start, line.end),
-      leadingComment: line.leadingComment,
-      annotation: line.annotation,
-    };
-    const toks = line.tokens;
-
-    // R1: Const NAME = LITERAL — 가장 신뢰할 수 있는 추출 지점
-    if (cls.kind === "decl" && cls.declKind === "const") {
-      const eqIdx = toks.findIndex(t => t.kind === "op" && t.raw === "=");
-      if (eqIdx >= 0) {
-        const lit = pickSingleLiteral(toks, eqIdx + 1, toks.length);
-        if (lit && !(lit.kind === "number" && lit.hex)) {
-          const constIdx = toks.findIndex(t => t.kind === "keyword" && t.lower === "const");
-          const nameTok = toks[constIdx + 1]?.kind === "ident" ? toks[constIdx + 1] : null;
-          const ed = makeEditable(nid(), lit, ctx, nameTok?.raw);
-          if (ed) out.push(ed);
-        }
-      }
-      continue;
-    }
-
-    // R3: For — 끝값만 추출 (시작값/스텝은 보통 코드 인덱싱)
-    // 단, 시작값이 큰 정수(>2)면 함께 추출
-    if (cls.kind === "for") {
-      const eqIdx = toks.findIndex(t => t.kind === "op" && t.raw === "=");
-      const toIdx = toks.findIndex(t => t.kind === "keyword" && t.lower === "to");
-      const stepIdx = toks.findIndex(t => t.kind === "keyword" && t.lower === "step");
-      const forIdx = toks.findIndex(t => t.kind === "keyword" && t.lower === "for");
-      const varTok = forIdx >= 0 && toks[forIdx + 1]?.kind === "ident" ? toks[forIdx + 1] : null;
-
-      if (eqIdx >= 0 && toIdx > eqIdx) {
-        const startLit = pickSingleLiteral(toks, eqIdx + 1, toIdx);
-        const endLit = pickSingleLiteral(toks, toIdx + 1, stepIdx >= 0 ? stepIdx : toks.length);
-
-        // 시작값: 3 이상의 정수일 때만 (1, 2는 거의 항상 인덱스)
-        if (startLit && startLit.kind === "number" && !startLit.hex) {
-          const n = Number(startLit.raw);
-          if (Number.isFinite(n) && n >= 3) {
-            const ed = makeEditable(nid(), startLit, ctx, varTok?.raw, "시작 행");
-            if (ed) out.push(ed);
-          }
-        }
-        // 끝값은 일반적으로 추출 (단 너무 작은 정수면 제외 — 열 인덱스 등)
-        if (endLit && endLit.kind === "number" && !endLit.hex) {
-          const n = Number(endLit.raw);
-          // 시작값이 인덱스 같고 끝값도 작으면(≤20) 둘 다 인덱스 루프로 보고 제외
-          const startIsIndex = startLit?.kind === "number" && Number(startLit.raw) <= 2;
-          if (!(startIsIndex && Number.isFinite(n) && n <= 20)) {
-            const ed = makeEditable(nid(), endLit, ctx, varTok?.raw, "끝 값");
-            if (ed) out.push(ed);
-          }
-        }
-      }
-    }
-
-    // R4: If/ElseIf 비교 우변 리터럴 (단, 0/빈문자열 가드 제외)
-    if (cls.kind === "if" || cls.kind === "elseIf") {
-      for (let k = 0; k < toks.length - 1; k++) {
-        const a = toks[k], b = toks[k+1];
-        if (a.kind !== "op") continue;
-        if (![">","<",">=","<=","=","<>"].includes(a.raw)) continue;
-        if (!(b.kind === "number" || b.kind === "string" || b.kind === "bool")) continue;
-        if (isLikelyCodeLogic(b)) continue;
-        const lhsLabel = findLhsLabel(toks, k);
-        const ed = makeEditable(nid(), b, ctx, lhsLabel, "조건값");
-        if (ed) out.push(ed);
-      }
-    }
-
-    // R5: 화이트리스트 함수의 리터럴 인자
-    extractFunctionArgs(toks, ctx, out, nid);
-
-    // R2: 단순 할당 ident = literal — 주석/어노테이션 있을 때만
-    if (cls.kind === "stmt" && (line.leadingComment || line.annotation)) {
-      const t = toks.filter(x => x.kind !== "comment");
-      if (t.length === 3 &&
-          t[0].kind === "ident" &&
-          t[1].kind === "op" && t[1].raw === "=" &&
-          (t[2].kind === "number" || t[2].kind === "string" || t[2].kind === "bool") &&
-          !isLikelyCodeLogic(t[2])) {
-        const ed = makeEditable(nid(), t[2], ctx, t[0].raw);
-        if (ed) out.push(ed);
-      }
+  for (let i = 0; i < toks.length; i++) {
+    if (toks[i].kind !== "string") continue;
+    const prev = toks[i-1], next = toks[i+1];
+    const v = toks[i].raw.slice(1, -1);
+    if (v === "" || v === " " || v === "\\") continue;
+    if ((prev?.kind === "op" && prev.raw === "&") ||
+        (next?.kind === "op" && next.raw === "&")) {
+      out.push(toks[i]);
     }
   }
-
-  // 동일 range dedup
-  const seen = new Set();
-  return out.filter(ed => {
-    const key = `${ed.range[0]}-${ed.range[1]}`;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
+  return out;
 }
 
-function pickSingleLiteral(toks, from, to) {
-  const slice = toks.slice(from, to).filter(t => t.kind !== "comment");
+function findMathNumbers(toks) {
+  const out = [];
+  for (let i = 0; i < toks.length; i++) {
+    if (toks[i].kind !== "number" || toks[i].hex) continue;
+    const n = Number(toks[i].raw);
+    if (!Number.isFinite(n) || n === 0 || n === 1 || n === -1) continue;
+    const prev = toks[i-1], next = toks[i+1];
+    const isMath = (prev?.kind === "op" && /[+\-*/]/.test(prev.raw)) ||
+                   (next?.kind === "op" && /[+\-*/]/.test(next.raw));
+    if (isMath) out.push(toks[i]);
+  }
+  return out;
+}
+
+function pickSingleLiteral(toks) {
+  const slice = toks.filter(t => t.kind !== "comment");
   if (slice.length === 1) {
     const t = slice[0];
     if (t.kind === "number" || t.kind === "string" || t.kind === "bool") return t;
@@ -820,10 +970,7 @@ function findLhsLabel(toks, opIdx) {
         if (u.kind === "punct" && u.raw === ")") depth++;
         else if (u.kind === "punct" && u.raw === "(") {
           depth--;
-          if (depth === 0) {
-            const fn = toks[m-1];
-            return fn?.kind === "ident" ? fn.raw : null;
-          }
+          if (depth === 0) { const fn = toks[m-1]; return fn?.kind === "ident" ? fn.raw : null; }
         }
       }
       return null;
@@ -833,12 +980,163 @@ function findLhsLabel(toks, opIdx) {
   return null;
 }
 
-function extractFunctionArgs(toks, ctx, out, nid) {
+function parseNamedArg(argToks) {
+  // [ident, :=, value...]
+  const t = argToks.filter(x => x.kind !== "comment");
+  if (t.length < 3) return null;
+  if (t[0].kind !== "ident") return null;
+  if (!(t[1].kind === "punct" && t[1].raw === ":=")) return null;
+  return { name: t[0].raw, value: t.slice(2) };
+}
+
+function makeCtx(line, parsed) {
+  return {
+    sub: line.sub,
+    line: parsed.source.slice(line.start, line.end),
+    leadingComment: line.leadingComment,
+    annotation: line.annotation,
+    sectionHeader: line.section,
+  };
+}
+
+function extract(parsed) {
+  const out = [];
+  let counter = 0;
+  const nid = () => `ed_${counter++}`;
+
+  for (const line of parsed.lines) {
+    const cls = line.classification;
+    const ctx = makeCtx(line, parsed);
+    const toks = line.tokens;
+
+    if (cls.kind === "decl" && cls.declKind === "const") {
+      handleConst(toks, ctx, out, nid);
+      continue;
+    }
+    if (cls.kind === "for") {
+      handleFor(toks, ctx, out, nid);
+    }
+    if (cls.kind === "if" || cls.kind === "elseIf" || cls.kind === "loopStart") {
+      handleComparisons(toks, cls, ctx, out, nid);
+    }
+
+    handleFunctionCalls(toks, ctx, out, nid);
+    handleMsgBoxNoParen(toks, cls, ctx, out, nid);
+
+    if (cls.kind === "stmt" && (line.leadingComment || line.annotation)) {
+      handleSimpleAssign(toks, ctx, out, nid);
+    }
+  }
+
+  return dedup(out);
+}
+
+function dedup(eds) {
+  const seen = new Set();
+  return eds.filter(ed => {
+    const key = `${ed.range[0]}-${ed.range[1]}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function handleConst(toks, ctx, out, nid) {
+  const eqIdx = toks.findIndex(t => t.kind === "op" && t.raw === "=");
+  if (eqIdx < 0) return;
+  const lit = pickSingleLiteral(toks.slice(eqIdx + 1));
+  if (!lit) return;
+  if (lit.kind === "number" && lit.hex) return;
+  const constIdx = toks.findIndex(t => t.kind === "keyword" && t.lower === "const");
+  let nameTok = null;
+  for (let i = constIdx + 1; i < toks.length; i++) {
+    if (toks[i].kind === "ident") { nameTok = toks[i]; break; }
+  }
+  const ed = makeEditable({
+    id: nid(), tok: lit, ctx,
+    fromConst: true,
+    ident: nameTok?.raw,
+  });
+  if (ed) out.push(ed);
+}
+
+function handleFor(toks, ctx, out, nid) {
+  const eqIdx = toks.findIndex(t => t.kind === "op" && t.raw === "=");
+  const toIdx = toks.findIndex(t => t.kind === "keyword" && t.lower === "to");
+  const stepIdx = toks.findIndex(t => t.kind === "keyword" && t.lower === "step");
+  const forIdx = toks.findIndex(t => t.kind === "keyword" && t.lower === "for");
+  const varTok = forIdx >= 0 && toks[forIdx + 1]?.kind === "ident" ? toks[forIdx + 1] : null;
+
+  if (eqIdx < 0 || toIdx <= eqIdx) return;
+
+  const startToks = toks.slice(eqIdx + 1, toIdx).filter(t => t.kind !== "comment");
+  const endToks   = toks.slice(toIdx + 1, stepIdx >= 0 ? stepIdx : toks.length).filter(t => t.kind !== "comment");
+  const stepToks  = stepIdx >= 0 ? toks.slice(stepIdx + 1).filter(t => t.kind !== "comment") : null;
+
+  function pushFromExpr(exprToks, role) {
+    if (!exprToks || exprToks.length === 0) return;
+    if (exprToks.length === 1) {
+      const lit = exprToks[0];
+      if (lit.kind === "number" && !lit.hex) {
+        const ed = makeEditable({
+          id: nid(), tok: lit, ctx,
+          fromForBound: role,
+          forVar: varTok?.raw,
+        });
+        if (ed) out.push(ed);
+      }
+      return;
+    }
+    // 수식 안 숫자
+    const nums = findMathNumbers(exprToks);
+    for (const lit of nums) {
+      const ed = makeEditable({
+        id: nid(), tok: lit, ctx,
+        fromMath: true,
+        fromForBound: role,
+        forVar: varTok?.raw,
+      });
+      if (ed) out.push(ed);
+    }
+  }
+
+  pushFromExpr(startToks, "start");
+  pushFromExpr(endToks, "end");
+  if (stepToks) pushFromExpr(stepToks, "step");
+}
+
+function handleComparisons(toks, cls, ctx, out, nid) {
+  for (let k = 0; k < toks.length - 1; k++) {
+    const a = toks[k], b = toks[k+1];
+    if (a.kind !== "op") continue;
+    if (![">","<",">=","<=","=","<>"].includes(a.raw)) continue;
+    if (!(b.kind === "number" || b.kind === "string" || b.kind === "bool")) continue;
+    if (isLikelyCodeLogic(b)) continue;
+    // 우변이 단일 리터럴인지 확인 (다음 토큰이 다른 표현식의 일부면 skip)
+    const next2 = toks[k+2];
+    if (next2 && (next2.kind === "ident" || next2.kind === "number" || next2.kind === "string")) continue;
+    const lhsLabel = findLhsLabel(toks, k);
+    const ed = makeEditable({
+      id: nid(), tok: b, ctx,
+      fromIfRhs: true,
+      lhsLabel,
+      compareOp: a.raw,
+    });
+    if (ed) out.push(ed);
+  }
+}
+
+function handleFunctionCalls(toks, ctx, out, nid) {
   for (let i = 0; i < toks.length - 1; i++) {
     const a = toks[i], b = toks[i+1];
     if (a.kind !== "ident" || b.kind !== "punct" || b.raw !== "(") continue;
-    const fname = (a.lower ?? a.raw.toLowerCase());
-    if (!FUNC_WHITELIST.has(fname)) continue;
+    const fname = a.lower ?? a.raw.toLowerCase();
+    if (!FUNC_LABELS[fname] && !SAFE_FUNCS.has(fname)) {
+      // 화이트리스트가 아니면 건너뜀 (괄호 매칭만 점프)
+      i = jumpPastParen(toks, i + 1);
+      continue;
+    }
+
     let depth = 1;
     const args = [[]];
     let j = i + 2;
@@ -856,38 +1154,137 @@ function extractFunctionArgs(toks, ctx, out, nid) {
       }
       j++;
     }
+
     for (let k = 0; k < args.length; k++) {
-      const arg = args[k].filter(t => t.kind !== "comment");
-      if (arg.length !== 1) continue;
-      const lit = arg[0];
-      if (!(lit.kind === "number" || lit.kind === "string")) continue;
-
-      // 시트/통합문서: 숫자 인자(시트 인덱스) 제외 — 문자열 이름만 의미 있음
-      if ((fname === "sheets" || fname === "worksheets" || fname === "workbooks") && lit.kind === "number") continue;
-      // MsgBox/InputBox: 두 번째 이후 인자의 숫자(상수 코드)는 제외
-      if ((fname === "msgbox" || fname === "inputbox") && k > 0 && lit.kind === "number") continue;
-      // Cells: 인자가 1 또는 0이면 거의 항상 코드 로직
-      if (fname === "cells" && lit.kind === "number" && Number(lit.raw) <= 1) continue;
-
-      const label = funcArgLabel(fname, k);
-      const ed = makeEditable(nid(), lit, ctx, null, null, label);
-      if (ed) out.push(ed);
+      processFuncArg(args[k], k, fname, ctx, out, nid);
     }
     i = j;
   }
 }
 
-function funcArgLabel(fname, idx) {
-  if (fname === "sheets" || fname === "worksheets") return "시트 이름";
-  if (fname === "workbooks") return "통합문서 이름";
-  if (fname === "range") return "셀 범위";
-  if (fname === "cells") return idx === 0 ? "행 번호" : "열 번호";
-  if (fname === "msgbox") return idx === 0 ? "알림 메시지" : "옵션";
-  if (fname === "inputbox") return idx === 0 ? "안내문" : (idx === 1 ? "제목" : "기본값");
-  return "값";
+function jumpPastParen(toks, openIdx) {
+  let depth = 1;
+  for (let j = openIdx + 1; j < toks.length; j++) {
+    if (toks[j].kind === "punct" && toks[j].raw === "(") depth++;
+    else if (toks[j].kind === "punct" && toks[j].raw === ")") {
+      depth--;
+      if (depth === 0) return j;
+    }
+  }
+  return toks.length;
 }
 
-function makeEditable(id, tok, ctx, hintIdent, suffix, overrideLabel) {
+function processFuncArg(argToks, k, fname, ctx, out, nid) {
+  const arg = argToks.filter(t => t.kind !== "comment");
+  if (arg.length === 0) return;
+
+  // 명명 인자 (name := value)
+  const named = parseNamedArg(arg);
+  if (named) {
+    const lit = pickSingleLiteral(named.value);
+    if (lit && !isLikelyCodeLogic(lit)) {
+      const ed = makeEditable({
+        id: nid(), tok: lit, ctx,
+        fromFuncArg: true,
+        funcName: fname, argIndex: k,
+        namedArg: named.name,
+      });
+      if (ed) out.push(ed);
+    }
+    return;
+  }
+
+  // 단일 리터럴
+  if (arg.length === 1) {
+    const lit = arg[0];
+    if (!(lit.kind === "number" || lit.kind === "string" || lit.kind === "bool")) return;
+    // 빈 문자열은 모든 함수에서 제외 (가드 / 플레이스홀더)
+    if (lit.kind === "string" && lit.raw === '""') return;
+    if (isLikelyCodeLogic(lit) && fname !== "msgbox" && fname !== "inputbox") return;
+
+    // 함수별 필터
+    if ((fname === "sheets" || fname === "worksheets" || fname === "workbooks") && lit.kind === "number") return;
+    if (fname === "instr" && k < 2) return;
+    if (fname === "mid" && k === 0) return;
+    if ((fname === "left" || fname === "right") && k === 0) return;
+    if ((fname === "msgbox" || fname === "inputbox") && k > 0 && lit.kind === "number") return;
+    if (fname === "cells" && lit.kind === "number" && Number(lit.raw) <= 1) return;
+    // FUNC_LABELS에서 null 위치는 추출 안 함
+    const labels = FUNC_LABELS[fname];
+    if (labels && labels[k] === null) return;
+
+    const ed = makeEditable({
+      id: nid(), tok: lit, ctx,
+      fromFuncArg: true, funcName: fname, argIndex: k,
+    });
+    if (ed) out.push(ed);
+    return;
+  }
+
+  // 복합 표현식 — 결합 문자열
+  for (const lit of findConcatStrings(arg)) {
+    const ed = makeEditable({
+      id: nid(), tok: lit, ctx,
+      fromConcat: true, funcName: fname, argIndex: k,
+    });
+    if (ed) out.push(ed);
+  }
+  // 수식 안 숫자
+  for (const lit of findMathNumbers(arg)) {
+    const ed = makeEditable({
+      id: nid(), tok: lit, ctx,
+      fromMath: true, funcName: fname, argIndex: k,
+    });
+    if (ed) out.push(ed);
+  }
+}
+
+function handleMsgBoxNoParen(toks, cls, ctx, out, nid) {
+  if (cls.kind !== "stmt") return;
+  const noComm = toks.filter(t => t.kind !== "comment");
+  if (noComm.length < 2) return;
+  const first = noComm[0];
+  if (first.kind !== "ident") return;
+  const fn = first.lower ?? first.raw.toLowerCase();
+  if (fn !== "msgbox" && fn !== "inputbox") return;
+  const second = noComm[1];
+  if (second.kind === "punct" && second.raw === "(") return; // 괄호 호출은 handleFunctionCalls에서
+
+  // ',' 구분으로 인자 분할
+  const argToks = noComm.slice(1);
+  const args = [[]];
+  let depth = 0;
+  for (const t of argToks) {
+    if (t.kind === "punct" && t.raw === "(") { depth++; args[args.length-1].push(t); }
+    else if (t.kind === "punct" && t.raw === ")") { depth--; args[args.length-1].push(t); }
+    else if (t.kind === "punct" && t.raw === "," && depth === 0) args.push([]);
+    else args[args.length-1].push(t);
+  }
+  for (let k = 0; k < args.length; k++) {
+    processFuncArg(args[k], k, fn, ctx, out, nid);
+  }
+}
+
+function handleSimpleAssign(toks, ctx, out, nid) {
+  const t = toks.filter(x => x.kind !== "comment");
+  if (t.length !== 3) return;
+  if (t[0].kind !== "ident") return;
+  if (!(t[1].kind === "op" && t[1].raw === "=")) return;
+  const lit = t[2];
+  if (!(lit.kind === "number" || lit.kind === "string" || lit.kind === "bool")) return;
+  if (isLikelyCodeLogic(lit)) return;
+  const ed = makeEditable({
+    id: nid(), tok: lit, ctx,
+    fromAssign: true, ident: t[0].raw,
+  });
+  if (ed) out.push(ed);
+}
+
+// ============================================================
+// makeEditable / 라벨 / 분류
+// ============================================================
+function makeEditable(opts) {
+  const { tok, ctx, id } = opts;
   if (tok.kind === "number" && tok.hex) return null;
 
   const kind = tok.kind === "number" ? "number" : tok.kind === "string" ? "string" : "bool";
@@ -901,75 +1298,227 @@ function makeEditable(id, tok, ctx, hintIdent, suffix, overrideLabel) {
     value = tok.raw.toLowerCase() === "true";
   }
 
-  let label;
-  if (ctx.annotation?.label) label = ctx.annotation.label;
-  else if (ctx.leadingComment && !ctx.leadingComment.startsWith("@param")) label = ctx.leadingComment;
-  else if (overrideLabel) label = overrideLabel;
-  else if (hintIdent) {
-    label = identToKorean(hintIdent);
-    if (suffix) label += " " + suffix;
-  } else label = "값";
-
-  const hint = {
-    label,
-    widget: kind === "number" ? "slider" : kind === "string" ? "text" : "toggle",
-  };
-  if (ctx.annotation) {
-    if (typeof ctx.annotation.min === "number") hint.min = ctx.annotation.min;
-    if (typeof ctx.annotation.max === "number") hint.max = ctx.annotation.max;
-    if (typeof ctx.annotation.step === "number") hint.step = ctx.annotation.step;
-    if (ctx.annotation.options) hint.options = ctx.annotation.options;
-  }
-
-  return {
+  const ed = {
     id, kind,
     range: [tok.start, tok.end],
     raw: tok.raw,
     value,
     context: ctx,
-    hint,
+    fromConst:    opts.fromConst ?? false,
+    fromAssign:   opts.fromAssign ?? false,
+    fromForBound: opts.fromForBound ?? null,
+    forVar:       opts.forVar ?? null,
+    fromIfRhs:    opts.fromIfRhs ?? false,
+    lhsLabel:     opts.lhsLabel ?? null,
+    compareOp:    opts.compareOp ?? null,
+    fromFuncArg:  opts.fromFuncArg ?? false,
+    funcName:     opts.funcName ?? null,
+    argIndex:     opts.argIndex ?? null,
+    namedArg:     opts.namedArg ?? null,
+    fromConcat:   opts.fromConcat ?? false,
+    fromMath:     opts.fromMath ?? false,
+    ident:        opts.ident ?? null,
   };
+
+  ed.label    = labelFor(ed);
+  ed.tier     = classifyTier(ed);
+  ed.category = categorize(ed);
+  ed.hint     = computeHint(ed);
+  return ed;
+}
+
+function labelFor(ed) {
+  const ctx = ed.context;
+  // 1. annotation
+  if (ctx.annotation?.label) return ctx.annotation.label;
+  // 2. leadingComment
+  if (ctx.leadingComment && !ctx.leadingComment.startsWith("@param")) {
+    const cleaned = cleanCommentText(ctx.leadingComment);
+    if (cleaned && cleaned.length <= 30) return cleaned;
+  }
+  // 3. 명명 인자
+  if (ed.namedArg) {
+    const lower = ed.namedArg.toLowerCase();
+    if (NAMED_ARG_LABELS[lower]) return NAMED_ARG_LABELS[lower];
+    const ko = identToKorean(ed.namedArg);
+    if (ko) return ko;
+    return ed.namedArg;
+  }
+  // 4. 함수 컨텍스트 라벨
+  if (ed.fromFuncArg && ed.funcName) {
+    const labels = FUNC_LABELS[ed.funcName];
+    if (labels && labels[ed.argIndex]) return labels[ed.argIndex];
+  }
+  // 5. 결합 문자열
+  if (ed.fromConcat) {
+    if (ed.funcName === "range") return "셀 범위 시작 부분";
+    if (ed.funcName === "sheets" || ed.funcName === "worksheets") return "시트 이름 일부";
+    if (ed.funcName === "msgbox" || ed.funcName === "inputbox") return "메시지 일부";
+    if (ed.funcName === "dir") return "찾을 파일 이름 일부";
+    return "텍스트 일부";
+  }
+  // 6. 수식 안 숫자
+  if (ed.fromMath) {
+    if (ed.fromForBound === "end") return "검색 추가 행 수";
+    if (ed.fromForBound === "start") return "시작 보정 숫자";
+    if (ed.funcName === "range" || ed.funcName === "cells") return "셀 위치 보정";
+    return "수식 안 숫자";
+  }
+  // 7. For 단일 리터럴
+  if (ed.fromForBound) {
+    const role = ed.fromForBound;
+    const varKo = ed.forVar ? identToKorean(ed.forVar) : null;
+    if (role === "end") {
+      if (varKo && /행|row/i.test(varKo + (ed.forVar || ""))) return "마지막 행 번호";
+      return "반복 마지막 값";
+    }
+    if (role === "start") {
+      if (varKo && /행|row/i.test(varKo + (ed.forVar || ""))) return "데이터 시작 행";
+      return "반복 시작 값";
+    }
+    if (role === "step") return "증가폭";
+  }
+  // 8. If 비교 우변
+  if (ed.fromIfRhs) {
+    const lhs = ed.lhsLabel;
+    if (lhs && lhs.length > 1) {
+      const ko = identToKorean(lhs);
+      if (ko) return ko + " 임계값";
+    }
+    if (ctx.sectionHeader) return ctx.sectionHeader + " 임계값";
+    return "조건 임계값";
+  }
+  // 9. Const / 단순 할당 — 변수명 한국어
+  if (ed.fromConst || ed.fromAssign) {
+    if (ed.ident) {
+      const ko = identToKorean(ed.ident);
+      if (ko) return ko;
+    }
+  }
+  // 10. 섹션 헤더 fallback
+  if (ctx.sectionHeader) return ctx.sectionHeader;
+  // 11. 최후
+  return ed.kind === "string" ? "문자열 값" : ed.kind === "bool" ? "켜기/끄기" : "숫자 값";
+}
+
+function classifyTier(ed) {
+  // 가장 신뢰
+  if (ed.context.annotation) return "safe";
+  if (ed.fromConst) return "safe";
+  if (ed.fromAssign && (ed.context.leadingComment || ed.context.annotation)) return "safe";
+
+  if (ed.fromFuncArg) {
+    if (ed.namedArg) return "safe";
+    const fn = ed.funcName;
+    if (fn && SAFE_FUNCS.has(fn)) {
+      // Cells의 좌표는 caution
+      if (fn === "cells") return "caution";
+      return "safe";
+    }
+    return "caution";
+  }
+  if (ed.fromConcat) {
+    // 의미 있는 결합 텍스트는 safe
+    return "safe";
+  }
+  if (ed.fromIfRhs) return "caution";
+  if (ed.fromForBound) {
+    if (ed.fromMath) return "advanced";
+    const v = Number(ed.raw);
+    if (ed.fromForBound === "end") {
+      if (Number.isFinite(v) && v > 10) return "caution";
+      return "advanced";
+    }
+    if (ed.fromForBound === "start") {
+      if (Number.isFinite(v) && v >= 3) return "caution";
+      return "advanced";
+    }
+    return "advanced";
+  }
+  if (ed.fromMath) return "advanced";
+  return "advanced";
+}
+
+function categorize(ed) {
+  // 명명 인자가 file/path 관련이면 file
+  if (ed.namedArg) {
+    const n = ed.namedArg.toLowerCase();
+    if (/file|path|folder|dir/.test(n)) return "file";
+    if (/sheet|book|range/.test(n)) return "sheet";
+    if (/password|key|readonly|matchcase/.test(n)) return "flag";
+    if (/prompt|title|message|msg/.test(n)) return "message";
+  }
+  if (ed.fromFuncArg) {
+    const fn = ed.funcName;
+    if (fn === "dir" || fn === "open") return "file";
+    if (fn === "sheets" || fn === "worksheets" || fn === "workbooks" || fn === "range" || fn === "cells") return "sheet";
+    if (fn === "instr" || fn === "find" || fn === "findnext" || fn === "replace") return "search";
+    if (fn === "msgbox" || fn === "inputbox") return "message";
+  }
+  if (ed.fromConcat) {
+    const fn = ed.funcName;
+    if (fn === "range" || fn === "sheets" || fn === "worksheets") return "sheet";
+    if (fn === "msgbox" || fn === "inputbox") return "message";
+    if (fn === "dir") return "file";
+    return "other";
+  }
+  if (ed.fromIfRhs) return "search";
+  if (ed.kind === "bool") return "flag";
+  if (ed.kind === "string") {
+    // 식별자/변수명 힌트로 추정
+    const ident = (ed.ident || ed.lhsLabel || "").toLowerCase();
+    if (/file|path|folder|dir/.test(ident)) return "file";
+    if (/sheet|range|cell/.test(ident)) return "sheet";
+    if (/msg|message|alert|info/.test(ident)) return "message";
+    return "other";
+  }
+  if (ed.kind === "number") return "number";
+  return "other";
+}
+
+function computeHint(ed) {
+  const hint = {};
+  if (ed.context.annotation) {
+    if (typeof ed.context.annotation.min === "number") hint.min = ed.context.annotation.min;
+    if (typeof ed.context.annotation.max === "number") hint.max = ed.context.annotation.max;
+    if (typeof ed.context.annotation.step === "number") hint.step = ed.context.annotation.step;
+    if (ed.context.annotation.options) hint.options = ed.context.annotation.options;
+  }
+  return hint;
 }
 
 // ============================================================
-// 자연어 요약 (룰 기반, LLM 없음)
+// 자연어 요약
 // ============================================================
+const ACTION_PATTERNS = [
+  { re: /\bWorkbooks\.Open\b/i,           text: "외부 엑셀 파일을 엽니다" },
+  { re: /\bWorkbooks?\.Close\b|\.Close\s+SaveChanges/i, text: "외부 파일을 닫습니다" },
+  { re: /\bDir\s*\(/i,                    text: "폴더에서 파일을 찾습니다" },
+  { re: /\.Copy\b/,                       text: "데이터를 복사합니다" },
+  { re: /\.Resize\s*\(.*\)\.Value\s*=/i,  text: "값을 한 번에 붙여넣습니다" },
+  { re: /\bMsgBox\b/i,                    text: "메시지창을 띄웁니다" },
+  { re: /\bInputBox\b/i,                  text: "사용자에게 입력을 받습니다" },
+  { re: /\bInStr\s*\(/i,                  text: "텍스트를 검색합니다" },
+  { re: /\bExit\s+Sub\b/i,                text: "조건에 따라 매크로를 중단합니다" },
+  { re: /\bScreenUpdating\s*=\s*False/i,  text: "화면 깜빡임을 막아 속도를 높입니다" },
+  { re: /\.Sort\b/i,                      text: "데이터를 정렬합니다" },
+  { re: /\.AutoFilter\b/i,                text: "자동 필터를 적용합니다" },
+  { re: /\.Delete\b/i,                    text: "값이나 행을 지웁니다" },
+  { re: /\.Save\b/i,                      text: "파일을 저장합니다" },
+  { re: /\bFor\s+\w+\s*=/i,               text: "여러 행을 순서대로 처리합니다" },
+  { re: /\bIf\b.*\bThen\b/i,              text: "조건에 따라 다르게 동작합니다" },
+];
+
 function summarize(parsed) {
   const subs = [];
   let cur = null;
-
-  // 라인 안에서 패턴 매칭
-  function detectActions(line, actions) {
-    const toks = line.tokens.filter(t => t.kind !== "comment");
-    const text = parsed.source.slice(line.start, line.end);
-
-    function has(re) { return re.test(text); }
-
-    if (has(/\bWorkbooks\.Open\b/i)) actions.push({ kind: "open", text: "외부 엑셀 파일을 엽니다" });
-    else if (has(/\bWorkbooks\.Close\b|\.Close\s+SaveChanges/i)) actions.push({ kind: "close", text: "외부 파일을 닫습니다" });
-    if (has(/\bDir\s*\(/i)) actions.push({ kind: "dir", text: "폴더에서 파일을 검색합니다" });
-    if (has(/\.Copy\b/)) actions.push({ kind: "copy", text: "데이터를 복사합니다" });
-    if (has(/\bResize\s*\(.*\)\.Value\s*=/) || has(/\.Range\s*\(.*\)\.Value\s*=\s*\w+Arr\b/)) {
-      actions.push({ kind: "paste", text: "값을 한 번에 붙여넣습니다" });
-    }
-    if (has(/\bMsgBox\b/i)) actions.push({ kind: "msgbox", text: "메시지창을 표시합니다" });
-    if (has(/\bInputBox\b/i)) actions.push({ kind: "input", text: "사용자 입력을 받습니다" });
-    if (has(/\bInStr\s*\(/i)) actions.push({ kind: "search", text: "텍스트를 검색합니다" });
-    if (has(/\bExit\s+Sub\b/i)) actions.push({ kind: "exit", text: "조건에 따라 매크로를 중단합니다" });
-    if (has(/\bScreenUpdating\s*=\s*False/i)) actions.push({ kind: "perf", text: "화면 깜빡임을 막아 속도를 높입니다" });
-    if (has(/\.Sort\b/i)) actions.push({ kind: "sort", text: "정렬합니다" });
-    if (has(/\.AutoFilter\b/i)) actions.push({ kind: "filter", text: "자동 필터를 적용합니다" });
-    if (has(/\.Delete\b/i)) actions.push({ kind: "delete", text: "값/행을 삭제합니다" });
-    if (has(/\.Save\b/i)) actions.push({ kind: "save", text: "저장합니다" });
-  }
-
   for (const line of parsed.lines) {
     if (line.classification.kind === "subStart") {
       const toks = line.tokens.filter(t => t.kind !== "comment");
       const nameTok = toks.find(t => t.kind === "ident");
       cur = {
         name: nameTok?.raw ?? "(이름없음)",
-        koName: identToKorean(nameTok?.raw ?? ""),
+        koName: identToKorean(nameTok?.raw ?? "") ?? "",
         firstComment: null,
         actions: [],
         forCount: 0,
@@ -982,23 +1531,19 @@ function summarize(parsed) {
     if (line.classification.kind === "subEnd") { cur = null; continue; }
 
     if (!cur.firstComment && line.tokens.length === 1 && line.tokens[0].kind === "comment") {
-      const t = line.tokens[0].raw.replace(/^'\s*|^[Rr][Ee][Mm]\s+/, "").trim();
-      if (t && !/^[=\-_*#]{3,}/.test(t)) cur.firstComment = t;
+      const t = cleanCommentText(line.tokens[0].raw.replace(/^'\s*|^[Rr][Ee][Mm]\s+/, "").trim());
+      if (t) cur.firstComment = t;
     }
     if (line.classification.kind === "for") cur.forCount++;
     if (line.classification.kind === "if") cur.ifCount++;
 
-    detectActions(line, cur.actions);
+    const text = parsed.source.slice(line.start, line.end);
+    for (const p of ACTION_PATTERNS) {
+      if (p.re.test(text)) cur.actions.push(p.text);
+    }
   }
-
-  // 각 sub의 actions dedup (kind 기준 첫 번째만)
   for (const s of subs) {
-    const seen = new Set();
-    s.actions = s.actions.filter(a => {
-      if (seen.has(a.kind)) return false;
-      seen.add(a.kind);
-      return true;
-    });
+    s.actions = [...new Set(s.actions)];
   }
   return subs;
 }
@@ -1008,10 +1553,7 @@ function summarize(parsed) {
 // ============================================================
 function valueToRaw(kind, value) {
   if (kind === "number") return String(value);
-  if (kind === "string") {
-    const escaped = String(value).replace(/"/g, '""');
-    return `"${escaped}"`;
-  }
+  if (kind === "string") return `"${String(value).replace(/"/g, '""')}"`;
   if (kind === "bool") return value ? "True" : "False";
   return String(value);
 }
@@ -1032,7 +1574,21 @@ function renderSource(source, editables, edits) {
 }
 
 // ============================================================
-// 상태 + UI
+// 카테고리 메타
+// ============================================================
+const CATEGORY_ORDER = ["file","sheet","search","number","message","flag","other"];
+const CATEGORY_NAMES = {
+  file:    "파일과 폴더",
+  sheet:   "시트와 셀 범위",
+  search:  "검색과 조건",
+  number:  "숫자 설정",
+  message: "메시지",
+  flag:    "켜기 / 끄기",
+  other:   "기타",
+};
+
+// ============================================================
+// 상태
 // ============================================================
 const state = {
   source: "",
@@ -1053,7 +1609,7 @@ let suppressInput = false;
 
 function setStatus(msg, kind) {
   $status.textContent = msg;
-  $status.className = "status" + (kind ? " " + kind : "");
+  $status.className = "info" + (kind ? " " + kind : "");
 }
 
 function escapeHtml(s) {
@@ -1068,6 +1624,7 @@ function analyze() {
     annotateLines(parsed);
     state.editables = extract(parsed);
     state.summary = summarize(parsed);
+    return true;
   } catch (e) {
     console.error(e);
     state.editables = [];
@@ -1075,37 +1632,35 @@ function analyze() {
     setStatus("분석 오류: " + e.message, "error");
     return false;
   }
-  return true;
 }
 
 function renderSummary() {
   if (!state.source.trim()) {
-    $summary.innerHTML = `<div class="empty-summary">아래에 VBA 코드를 붙여넣으면 여기에 한국어 요약이 나타납니다</div>`;
+    $summary.innerHTML = `<div class="summary-empty">아래에 VBA 코드를 붙여넣으면 여기에 한국어 요약이 나타나요</div>`;
     return;
   }
   if (state.summary.length === 0) {
-    $summary.innerHTML = `<div class="empty-summary">Sub/Function 정의를 찾지 못했습니다</div>`;
+    $summary.innerHTML = `<div class="summary-empty">Sub / Function 정의를 찾지 못했어요</div>`;
     return;
   }
   let html = "";
   for (const s of state.summary) {
-    html += `<div class="summary-card">
-      <div class="sub-title">${escapeHtml(s.name)}<span class="ko">${escapeHtml(s.koName !== s.name ? s.koName : "")}</span></div>`;
-    if (s.firstComment) {
-      html += `<div class="sub-desc">"${escapeHtml(s.firstComment)}"</div>`;
-    }
+    const titleKo = s.koName && s.koName !== s.name ? s.koName : "";
+    const oneLiner = s.firstComment
+      ? `<div class="one-liner">${escapeHtml(s.name)}${titleKo ? ` <span style="color:var(--muted);font-weight:400;font-size:12.5px;">— ${escapeHtml(titleKo)}</span>` : ""}</div>
+         <div class="desc">"${escapeHtml(s.firstComment)}"</div>`
+      : `<div class="one-liner">${escapeHtml(s.name)}${titleKo ? ` <span style="color:var(--muted);font-weight:400;font-size:12.5px;">— ${escapeHtml(titleKo)}</span>` : ""}</div>`;
+    html += `<div class="summary-card">${oneLiner}`;
     if (s.actions.length > 0) {
-      html += `<ul>`;
-      for (const a of s.actions) html += `<li>${escapeHtml(a.text)}</li>`;
-      html += `</ul>`;
+      html += `<ul>` + s.actions.map(a => `<li>${escapeHtml(a)}</li>`).join("") + `</ul>`;
     } else {
-      html += `<ul><li style="color:var(--dim)">자동 인식된 동작 없음</li></ul>`;
+      html += `<ul><li style="color:var(--dim);">자동으로 인식한 동작이 없어요</li></ul>`;
     }
     if (s.forCount > 0 || s.ifCount > 0) {
       const meta = [];
       if (s.forCount > 0) meta.push(`반복 ${s.forCount}회`);
       if (s.ifCount > 0) meta.push(`조건 분기 ${s.ifCount}개`);
-      html += `<div class="src" style="margin-top:6px;color:var(--dim);font-size:11px;">${escapeHtml(meta.join(" · "))}</div>`;
+      html += `<div class="meta">${escapeHtml(meta.join(" · "))}</div>`;
     }
     html += `</div>`;
   }
@@ -1114,49 +1669,76 @@ function renderSummary() {
 
 function renderControls() {
   if (!state.source.trim()) {
-    $controls.innerHTML = `<div class="empty">
-      좌측에 VBA 코드를 붙여넣으면<br>
-      안전하게 바꿀 수 있는 값들이 여기에 자동으로 나타납니다.<br><br>
-      인식 패턴 예시:<br>
-      <code>Const LAST_ROW = 100</code><br>
-      <code>For i = 14 To 100</code><br>
-      <code>Sheets("매출")</code><br>
-      <code>If 금액 &gt; 50000 Then</code>
+    $controls.innerHTML = `<div class="empty-state">
+      <div class="big">·</div>
+      아직 코드를 붙여넣지 않으셨네요.<br>
+      왼쪽 칸에 매크로 코드를 붙여 넣으면<br>
+      바꿀 수 있는 값들을 자동으로 찾아 보여드릴게요.
     </div>`;
     return;
   }
   if (state.editables.length === 0) {
-    $controls.innerHTML = `<div class="notice warn">
-      <b>자동으로 인식할 수 있는 설정값이 없습니다.</b><br>
-      이 매크로는 사용자가 만질 만한 명확한 값(상수, 시트명 등)을 갖고 있지 않거나,
-      값이 변수로 표현되어 있어 자동 인식이 어렵습니다.<br><br>
-      코드를 작성한 사람(또는 AI)에게 다음처럼 표시해 달라고 요청해 보세요:<br>
-      <code style="display:inline-block;margin-top:6px;padding:6px 8px;background:rgba(0,0,0,0.2);border-radius:4px;font-size:12px;">' @param 마지막행 min=1 max=10000<br>Const LAST_ROW = 100</code>
+    $controls.innerHTML = `<div class="notice">
+      <b>자동으로 인식한 설정값이 없어요.</b><br>
+      이 매크로는 사용자가 만질 만한 분명한 값(상수, 시트명, 파일명 등)을 갖고 있지 않거나,
+      값이 변수에 가려져 있어요.<br><br>
+      코드를 만든 사람(또는 AI)에게 이렇게 표시해 달라고 요청해 보세요:<br>
+      <code style="display:inline-block;margin-top:8px;padding:8px 10px;background:rgba(0,0,0,0.04);border-radius:8px;font-size:12px;">' @param 마지막행 min=1 max=10000<br>Const LAST_ROW = 100</code>
     </div>`;
     return;
   }
 
-  const groups = new Map();
-  for (const ed of state.editables) {
-    const sub = ed.context.sub ?? "(전역 코드)";
-    if (!groups.has(sub)) groups.set(sub, []);
-    groups.get(sub).push(ed);
+  // tier별 분리
+  const primary = state.editables.filter(e => e.tier !== "advanced");
+  const advanced = state.editables.filter(e => e.tier === "advanced");
+
+  // 카테고리별 그룹
+  const groupsByCat = {};
+  for (const ed of primary) {
+    if (!groupsByCat[ed.category]) groupsByCat[ed.category] = [];
+    groupsByCat[ed.category].push(ed);
   }
 
   let html = `<div class="notice">
-    <b>자동 인식된 값들입니다.</b> 라벨이 어색한 것은 코드의 변수명에서 추측된 것이니,
-    오른쪽 아래 코드 라인을 보고 의미를 확인한 뒤 바꾸세요.
-    의미가 분명하지 않으면 그대로 두는 것이 안전합니다.
+    <b>안녕하세요!</b> 자동으로 인식한 설정값이에요. 라벨이 어색할 수 있으니,
+    아래쪽 "코드에서 어디?"를 눌러 원본 줄을 한 번 확인하고 바꿔 주세요.
+    의미가 분명하지 않으면 그대로 두는 것이 안전해요.
   </div>`;
 
-  for (const [sub, eds] of groups) {
-    html += `<div class="sub-group">
-      <div class="sub-header"><span>${escapeHtml(sub)}</span><span class="count">${eds.length}개 설정</span></div>`;
-    for (const ed of eds) html += renderWidget(ed);
-    html += `</div>`;
+  // 메인 그룹
+  for (const cat of CATEGORY_ORDER) {
+    const items = groupsByCat[cat];
+    if (!items || items.length === 0) continue;
+    html += renderGroup(CATEGORY_NAMES[cat], items);
   }
+
+  // 고급 섹션
+  if (advanced.length > 0) {
+    const advByCat = {};
+    for (const ed of advanced) {
+      if (!advByCat[ed.category]) advByCat[ed.category] = [];
+      advByCat[ed.category].push(ed);
+    }
+    html += `<details class="advanced">
+      <summary>고급 설정 <span class="hint">— ${advanced.length}개. 코드 내부 값일 가능성이 높아 만지지 않는 것이 안전해요.</span></summary>`;
+    for (const cat of CATEGORY_ORDER) {
+      const items = advByCat[cat];
+      if (!items || items.length === 0) continue;
+      html += renderGroup(CATEGORY_NAMES[cat], items);
+    }
+    html += `</details>`;
+  }
+
   $controls.innerHTML = html;
   for (const ed of state.editables) bindWidget(ed);
+}
+
+function renderGroup(title, items) {
+  let html = `<section class="group">
+    <h2 class="group-title">${escapeHtml(title)} <span class="count">· ${items.length}개</span></h2>`;
+  for (const ed of items) html += renderWidget(ed);
+  html += `</section>`;
+  return html;
 }
 
 function getCurrentValue(ed) {
@@ -1170,54 +1752,57 @@ function getCurrentValue(ed) {
 function renderWidget(ed) {
   const changed = state.edits.has(ed.id);
   const value = getCurrentValue(ed);
-  const kindLabel = { number: "숫자", string: "문자열", bool: "참/거짓" }[ed.kind];
   let control = "";
 
   if (ed.kind === "number") {
-    const baseMin = ed.hint.min ?? Math.min(0, value - Math.max(10, Math.abs(value)));
-    const baseMax = ed.hint.max ?? Math.max(value * 2, value + 100, 100);
     const step = ed.hint.step ?? (Number.isInteger(value) ? 1 : 0.1);
-    const showSlider = (baseMax - baseMin) <= 100000;
-    if (showSlider) {
-      control = `<div class="control">
-        <input type="range" data-id="${ed.id}" data-role="range" min="${baseMin}" max="${baseMax}" step="${step}" value="${value}">
-        <input type="number" data-id="${ed.id}" data-role="num" class="compact" value="${value}" step="${step}">
-      </div>`;
-    } else {
-      control = `<div class="control">
-        <input type="number" data-id="${ed.id}" data-role="num" value="${value}" step="${step}">
-      </div>`;
-    }
+    const minAttr = typeof ed.hint.min === "number" ? `min="${ed.hint.min}"` : "";
+    const maxAttr = typeof ed.hint.max === "number" ? `max="${ed.hint.max}"` : "";
+    control = `<div class="number-stepper">
+      <button class="stepper-btn" data-id="${ed.id}" data-role="dec" type="button">−</button>
+      <input type="number" data-id="${ed.id}" data-role="num" value="${value}" step="${step}" ${minAttr} ${maxAttr}>
+      <button class="stepper-btn" data-id="${ed.id}" data-role="inc" type="button">+</button>
+    </div>`;
   } else if (ed.kind === "string") {
     if (ed.hint.options) {
-      control = `<div class="control"><select data-id="${ed.id}" data-role="select">${
+      control = `<select class="text-input" data-id="${ed.id}" data-role="select">${
         ed.hint.options.map(o => `<option value="${escapeHtml(o)}" ${o === value ? "selected" : ""}>${escapeHtml(o)}</option>`).join("")
-      }</select></div>`;
+      }</select>`;
     } else {
-      control = `<div class="control"><input type="text" data-id="${ed.id}" data-role="text" value="${escapeHtml(value)}"></div>`;
+      control = `<input type="text" class="text-input" data-id="${ed.id}" data-role="text" value="${escapeHtml(value)}">`;
     }
   } else if (ed.kind === "bool") {
-    control = `<div class="control"><label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+    control = `<label class="toggle">
       <input type="checkbox" data-id="${ed.id}" data-role="check" ${value ? "checked" : ""}>
-      <span data-role="check-label">${value ? "True (참)" : "False (거짓)"}</span>
-    </label></div>`;
+      <span class="toggle-track"><span class="toggle-thumb"></span></span>
+      <span class="toggle-text" data-role="check-label">${value ? "켜짐" : "꺼짐"}</span>
+    </label>`;
   }
 
   const origDisplay = ed.kind === "string" ? `"${escapeHtml(ed.value)}"` : escapeHtml(String(ed.value));
   const newDisplay = ed.kind === "string" ? `"${escapeHtml(value)}"` : escapeHtml(String(value));
   const diffLine = changed
-    ? `<div class="original">원본: <span class="ov">${origDisplay}</span> → <span class="nv">${newDisplay}</span></div>`
+    ? `<div class="diff-chip"><span class="ov">${origDisplay}</span> <span class="arr">→</span> <span class="nv">${newDisplay}</span></div>`
     : "";
 
-  return `<div class="widget ${changed ? "changed" : ""}" data-widget-id="${ed.id}">
-    <div class="label">
-      <span>${escapeHtml(ed.hint.label)}</span>
-      <span class="kind">${kindLabel}</span>
-      <span class="changed-mark ${changed ? "" : "hidden"}">● 변경됨</span>
+  const tierBadge = ed.tier === "caution"
+    ? `<span class="badge" style="background:rgba(230,168,90,0.15);color:#b87a30;">조심</span>`
+    : ed.tier === "advanced"
+      ? `<span class="badge" style="background:rgba(232,138,135,0.12);color:var(--danger);">코드 내부</span>`
+      : "";
+
+  return `<div class="card ${changed ? "changed" : ""}" data-widget-id="${ed.id}">
+    <div class="setting-label">
+      <span>${escapeHtml(ed.label)}</span>
+      ${tierBadge}
+      <span class="changed-chip" style="${changed ? "" : "display:none"}">변경됨</span>
     </div>
     ${control}
-    ${diffLine}
-    <div class="context" title="${escapeHtml(ed.context.line)}">${escapeHtml(ed.context.line.trim())}</div>
+    <div data-role="diff-slot">${diffLine}</div>
+    <details class="setting-context">
+      <summary>코드에서 어디?</summary>
+      <code>${escapeHtml(ed.context.line.trim())}</code>
+    </details>
   </div>`;
 }
 
@@ -1226,15 +1811,27 @@ function bindWidget(ed) {
   if (!root) return;
 
   if (ed.kind === "number") {
-    const range = root.querySelector('[data-role="range"]');
     const num = root.querySelector('[data-role="num"]');
-    const sync = (v) => {
-      if (range) range.value = v;
-      if (num) num.value = v;
-      setEdit(ed, Number(v));
+    const dec = root.querySelector('[data-role="dec"]');
+    const inc = root.querySelector('[data-role="inc"]');
+    const step = ed.hint.step ?? (Number.isInteger(ed.value) ? 1 : 0.1);
+    const clamp = (v) => {
+      if (typeof ed.hint.min === "number" && v < ed.hint.min) v = ed.hint.min;
+      if (typeof ed.hint.max === "number" && v > ed.hint.max) v = ed.hint.max;
+      return v;
     };
-    if (range) range.addEventListener("input", () => sync(range.value));
-    if (num) num.addEventListener("input", () => sync(num.value));
+    if (num) num.addEventListener("input", () => {
+      const v = clamp(Number(num.value));
+      if (Number.isFinite(v)) setEdit(ed, v);
+    });
+    if (dec) dec.addEventListener("click", () => {
+      const v = clamp(Number(num.value) - step);
+      num.value = v; setEdit(ed, v);
+    });
+    if (inc) inc.addEventListener("click", () => {
+      const v = clamp(Number(num.value) + step);
+      num.value = v; setEdit(ed, v);
+    });
   } else if (ed.kind === "string") {
     const t = root.querySelector('[data-role="text"]') || root.querySelector('[data-role="select"]');
     if (t) {
@@ -1246,7 +1843,7 @@ function bindWidget(ed) {
     const lbl = root.querySelector('[data-role="check-label"]');
     if (c) c.addEventListener("change", () => {
       setEdit(ed, c.checked);
-      if (lbl) lbl.textContent = c.checked ? "True (참)" : "False (거짓)";
+      if (lbl) lbl.textContent = c.checked ? "켜짐" : "꺼짐";
     });
   }
 }
@@ -1260,31 +1857,28 @@ function setEdit(ed, value) {
   if (same) state.edits.delete(ed.id);
   else state.edits.set(ed.id, valueToRaw(ed.kind, value));
 
+  // 좌측 코드 갱신
   const newSrc = renderSource(state.source, state.editables, state.edits);
   suppressInput = true;
   $src.value = newSrc;
   suppressInput = false;
 
-  // 변경된 위젯만 다시 그리지 않고, 효율을 위해 부분 갱신
+  // 위젯 시각 상태
   const root = $controls.querySelector(`[data-widget-id="${ed.id}"]`);
   if (root) {
     root.classList.toggle("changed", state.edits.has(ed.id));
-    const mark = root.querySelector(".changed-mark");
-    if (mark) mark.classList.toggle("hidden", !state.edits.has(ed.id));
+    const chip = root.querySelector(".changed-chip");
+    if (chip) chip.style.display = state.edits.has(ed.id) ? "" : "none";
 
-    // diff 라인 갱신
-    const oldDiff = root.querySelector(".original");
-    if (state.edits.has(ed.id)) {
-      const origDisplay = ed.kind === "string" ? `"${escapeHtml(ed.value)}"` : escapeHtml(String(ed.value));
-      const newDisplay = ed.kind === "string" ? `"${escapeHtml(getCurrentValue(ed))}"` : escapeHtml(String(getCurrentValue(ed)));
-      const html = `<div class="original">원본: <span class="ov">${origDisplay}</span> → <span class="nv">${newDisplay}</span></div>`;
-      if (oldDiff) oldDiff.outerHTML = html;
-      else {
-        const ctx = root.querySelector(".context");
-        if (ctx) ctx.insertAdjacentHTML("beforebegin", html);
-      }
-    } else {
-      if (oldDiff) oldDiff.remove();
+    // diff 갱신
+    const slot = root.querySelector('[data-role="diff-slot"]');
+    if (slot) {
+      if (state.edits.has(ed.id)) {
+        const cur = getCurrentValue(ed);
+        const ov = ed.kind === "string" ? `"${escapeHtml(ed.value)}"` : escapeHtml(String(ed.value));
+        const nv = ed.kind === "string" ? `"${escapeHtml(cur)}"` : escapeHtml(String(cur));
+        slot.innerHTML = `<div class="diff-chip"><span class="ov">${ov}</span> <span class="arr">→</span> <span class="nv">${nv}</span></div>`;
+      } else slot.innerHTML = "";
     }
   }
 
@@ -1292,7 +1886,7 @@ function setEdit(ed, value) {
   setStatus(
     state.edits.size === 0
       ? `${state.editables.length}개 설정 인식됨 · 변경 없음`
-      : `${state.editables.length}개 설정 · ${state.edits.size}개 변경됨`,
+      : `${state.editables.length}개 인식 · ${state.edits.size}개 변경됨`,
     "good"
   );
 }
@@ -1312,20 +1906,22 @@ $src.addEventListener("input", () => {
       setStatus("대기 중 — 코드를 붙여넣으세요");
     } else {
       const n = state.editables.length;
-      setStatus(n > 0 ? `${n}개 설정 인식됨` : "설정값 자동 인식 실패", n > 0 ? "good" : "");
+      const adv = state.editables.filter(e => e.tier === "advanced").length;
+      const main = n - adv;
+      setStatus(n > 0 ? `${main}개 설정 인식됨${adv > 0 ? ` (+ 고급 ${adv}개)` : ""}` : "설정값 자동 인식 실패", n > 0 ? "good" : "");
     }
-  }, 300);
+  }, 250);
 });
 
 $copy.addEventListener("click", async () => {
   const text = $src.value;
   try {
     await navigator.clipboard.writeText(text);
-    setStatus("클립보드에 복사됨 — Excel VBA 편집기에 붙여넣으세요", "good");
+    setStatus("클립보드에 복사됐어요 — Excel VBA 편집기에 붙여넣어 주세요", "good");
   } catch {
     $src.select();
-    try { document.execCommand("copy"); setStatus("복사됨", "good"); }
-    catch { setStatus("복사 실패 — 직접 선택해 복사하세요", "error"); }
+    try { document.execCommand("copy"); setStatus("복사됐어요", "good"); }
+    catch { setStatus("복사 실패 — 직접 선택해 복사해 주세요", "error"); }
   }
 });
 
@@ -1337,7 +1933,7 @@ $reset.addEventListener("click", () => {
   suppressInput = false;
   renderControls();
   $reset.disabled = true;
-  setStatus("모든 변경 초기화됨", "good");
+  setStatus("모든 변경을 되돌렸어요", "good");
 });
 </script>
 </body>
