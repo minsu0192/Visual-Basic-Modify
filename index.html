@@ -175,7 +175,7 @@ main {
 #src {
   flex: 1;
   width: 100%;
-  background: var(--surface);
+  background: transparent;
   color: var(--text);
   border: none;
   outline: none;
@@ -188,7 +188,33 @@ main {
   overflow: auto;
   tab-size: 4;
   min-height: 0;
+  position: relative;
+  z-index: 2;
 }
+#src::selection { background: rgba(246, 165, 182, 0.55); color: var(--text); }
+#src::-moz-selection { background: rgba(246, 165, 182, 0.55); color: var(--text); }
+
+.src-wrap {
+  flex: 1;
+  position: relative;
+  background: var(--surface);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.src-highlight {
+  position: absolute;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+  background: rgba(246, 165, 182, 0.32);
+  border-left: 3px solid var(--accent);
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 0.2s, top 0.12s ease-out;
+}
+.src-highlight.visible { opacity: 1; }
 
 .notice {
   background: rgba(168, 212, 240, 0.18);
@@ -241,9 +267,24 @@ main {
   padding: 13px 15px;
   margin-bottom: 9px;
   box-shadow: var(--shadow-sm);
-  transition: box-shadow 0.15s, transform 0.1s;
+  transition: box-shadow 0.15s, transform 0.1s, border-color 0.15s;
+  cursor: pointer;
 }
 .card:hover { box-shadow: var(--shadow-md); }
+.card.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(246, 165, 182, 0.25), var(--shadow-md);
+}
+.card .text-input,
+.card .number-stepper,
+.card .toggle,
+.card select,
+.card .stepper-btn,
+.card .setting-context summary {
+  cursor: auto;
+}
+.card .stepper-btn { cursor: pointer; }
+.card .toggle, .card .setting-context summary { cursor: pointer; }
 .card.changed {
   border-left: 4px solid var(--accent);
   padding-left: 12px;
@@ -252,13 +293,19 @@ main {
 
 .setting-label {
   font-weight: 700;
-  font-size: 13.5px;
-  margin-bottom: 9px;
+  font-size: 14px;
+  margin-bottom: 4px;
   display: flex;
   align-items: center;
   gap: 8px;
   color: var(--text);
   letter-spacing: -0.1px;
+}
+.setting-desc {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 10px;
+  line-height: 1.55;
 }
 .setting-label .badge {
   font-size: 10px;
@@ -532,7 +579,10 @@ button.secondary:disabled { opacity: 0.4; cursor: not-allowed; }
     <div id="summary">
       <div class="summary-empty">아래에 VBA 코드를 붙여넣으면 여기에 한국어 요약이 나타나요</div>
     </div>
-    <textarea id="src" spellcheck="false" placeholder="여기에 VBA 코드를 붙여 넣으세요"></textarea>
+    <div class="src-wrap">
+      <textarea id="src" spellcheck="false" placeholder="여기에 VBA 코드를 붙여 넣으세요"></textarea>
+      <div id="src-highlight" class="src-highlight"></div>
+    </div>
     <div class="status-bar">
       <span id="status" class="info">대기 중 — 코드를 붙여넣으세요</span>
     </div>
@@ -1320,11 +1370,88 @@ function makeEditable(opts) {
     ident:        opts.ident ?? null,
   };
 
-  ed.label    = labelFor(ed);
-  ed.tier     = classifyTier(ed);
-  ed.category = categorize(ed);
-  ed.hint     = computeHint(ed);
+  ed.label       = labelFor(ed);
+  ed.description = describe(ed);
+  ed.tier        = classifyTier(ed);
+  ed.category    = categorize(ed);
+  ed.hint        = computeHint(ed);
   return ed;
+}
+
+// ============================================================
+// 설명 (이 값이 어떻게 쓰이는지 한 줄로)
+// ============================================================
+function describe(ed) {
+  const fn = ed.funcName;
+
+  if (ed.namedArg) {
+    const n = ed.namedArg.toLowerCase();
+    if (n === "readonly") return ed.value ? "파일을 수정할 수 없게 열어요" : "파일을 수정할 수 있게 열어요";
+    if (n === "savechanges") return ed.value ? "닫을 때 파일을 저장해요" : "닫을 때 저장하지 않고 그냥 닫아요";
+    if (n === "matchcase") return ed.value ? "대문자/소문자를 구분해서 찾아요" : "대문자/소문자 상관없이 찾아요";
+    if (n === "password") return "이 비밀번호로 파일을 열어요";
+    if (n === "filename" || n === "filepath") return "이 위치의 파일을 다뤄요";
+    if (n === "destination") return "이 위치에 결과를 넣어요";
+    if (n === "prompt") return "사용자에게 보여줄 안내 문구예요";
+    if (n === "title") return "창의 제목으로 보여줘요";
+    if (n === "default") return "사용자가 아무것도 입력하지 않으면 이 값이 들어가요";
+  }
+
+  if (ed.fromFuncArg) {
+    if (fn === "sheets" || fn === "worksheets") return "이 이름의 시트에서 작업해요";
+    if (fn === "workbooks") return "이 이름의 통합문서를 사용해요";
+    if (fn === "range") return "이 범위의 셀을 다뤄요 (예: A1, A1:B10)";
+    if (fn === "cells") return ed.argIndex === 0 ? "이 행 번호의 셀을 사용해요" : "이 열 번호의 셀을 사용해요";
+    if (fn === "msgbox") return "이 메시지를 화면에 띄워요";
+    if (fn === "inputbox") return ed.argIndex === 0 ? "사용자에게 보여줄 안내 문구예요" : "창의 제목 등으로 쓰여요";
+    if (fn === "dir") return "이런 이름의 파일을 폴더에서 찾아요 (* 는 아무 글자 의미)";
+    if (fn === "instr" && ed.argIndex >= 2) return "이 단어가 들어 있는지 검사해요";
+    if (fn === "find" || fn === "findnext") return "이 값을 찾아요";
+    if (fn === "replace") return ed.argIndex === 0 ? "이 값을 찾아서" : "이 값으로 바꿔요";
+    if (fn === "open") return "이 위치의 파일을 열어요";
+  }
+
+  if (ed.fromConcat) {
+    if (fn === "range") return "셀 범위 주소의 앞부분이에요. 뒤에 다른 값(예: 행 번호)이 자동으로 붙어요";
+    if (fn === "sheets" || fn === "worksheets") return "시트 이름의 일부예요. 뒤에 다른 값이 붙어 완성돼요";
+    if (fn === "msgbox" || fn === "inputbox") return "메시지의 일부예요. 다른 값과 합쳐져서 한 문장이 돼요";
+    if (fn === "dir") return "찾을 파일 이름이에요 (* 는 아무 글자 의미)";
+    return "더 큰 텍스트의 한 부분이에요";
+  }
+
+  if (ed.fromMath) {
+    if (ed.fromForBound === "end") return "찾는 범위에 추가로 더 살펴볼 행 수예요";
+    if (ed.fromForBound === "start") return "시작 위치를 보정하는 숫자예요";
+    if (fn === "range" || fn === "cells") return "셀 위치를 계산할 때 더하거나 빼는 숫자예요";
+    return "계산식 안에서 사용되는 숫자예요";
+  }
+
+  if (ed.fromForBound) {
+    if (ed.fromForBound === "start") return "처음에 이 번호부터 차례로 처리해요";
+    if (ed.fromForBound === "end") return "이 번호까지 차례로 처리해요";
+    if (ed.fromForBound === "step") return "한 번에 몇씩 건너뛸지 정해요";
+  }
+
+  if (ed.fromIfRhs) {
+    const op = ed.compareOp;
+    const lhsKo = ed.lhsLabel && ed.lhsLabel.length > 1 ? identToKorean(ed.lhsLabel) : null;
+    const subj = lhsKo || "값";
+    if (op === ">") return `${subj}이(가) 이 숫자보다 클 때만 다음 동작을 해요`;
+    if (op === "<") return `${subj}이(가) 이 숫자보다 작을 때만 동작해요`;
+    if (op === ">=") return `${subj}이(가) 이 숫자 이상일 때만 동작해요`;
+    if (op === "<=") return `${subj}이(가) 이 숫자 이하일 때만 동작해요`;
+    if (op === "=") return `${subj}이(가) 이 값과 같을 때만 동작해요`;
+    if (op === "<>") return `${subj}이(가) 이 값과 다를 때만 동작해요`;
+    return "조건을 비교할 때 기준이 되는 값이에요";
+  }
+
+  if (ed.fromConst) return "이 매크로 안에서 고정으로 쓰는 값이에요";
+  if (ed.fromAssign) return "변수에 저장해서 매크로 안에서 사용하는 값이에요";
+
+  if (ed.kind === "string") return "텍스트 값이에요";
+  if (ed.kind === "number") return "숫자 값이에요";
+  if (ed.kind === "bool") return ed.value ? "켜진 상태예요" : "꺼진 상태예요";
+  return null;
 }
 
 function labelFor(ed) {
@@ -1351,42 +1478,43 @@ function labelFor(ed) {
   }
   // 5. 결합 문자열
   if (ed.fromConcat) {
-    if (ed.funcName === "range") return "셀 범위 시작 부분";
-    if (ed.funcName === "sheets" || ed.funcName === "worksheets") return "시트 이름 일부";
-    if (ed.funcName === "msgbox" || ed.funcName === "inputbox") return "메시지 일부";
-    if (ed.funcName === "dir") return "찾을 파일 이름 일부";
-    return "텍스트 일부";
+    if (ed.funcName === "range") return "셀 범위 (앞부분)";
+    if (ed.funcName === "sheets" || ed.funcName === "worksheets") return "시트 이름 (일부)";
+    if (ed.funcName === "msgbox" || ed.funcName === "inputbox") return "메시지 (일부)";
+    if (ed.funcName === "dir") return "찾을 파일 이름";
+    return "텍스트 (일부)";
   }
   // 6. 수식 안 숫자
   if (ed.fromMath) {
-    if (ed.fromForBound === "end") return "검색 추가 행 수";
-    if (ed.fromForBound === "start") return "시작 보정 숫자";
-    if (ed.funcName === "range" || ed.funcName === "cells") return "셀 위치 보정";
-    return "수식 안 숫자";
+    if (ed.fromForBound === "end") return "끝 위치 보정 숫자";
+    if (ed.fromForBound === "start") return "시작 위치 보정 숫자";
+    if (ed.funcName === "range" || ed.funcName === "cells") return "셀 위치 보정 숫자";
+    return "추가 숫자";
   }
   // 7. For 단일 리터럴
   if (ed.fromForBound) {
     const role = ed.fromForBound;
     const varKo = ed.forVar ? identToKorean(ed.forVar) : null;
+    const looksLikeRow = (varKo && /행|row/i.test(varKo + (ed.forVar || "")));
     if (role === "end") {
-      if (varKo && /행|row/i.test(varKo + (ed.forVar || ""))) return "마지막 행 번호";
-      return "반복 마지막 값";
+      if (looksLikeRow) return "마지막 행 번호";
+      return "끝 번호";
     }
     if (role === "start") {
-      if (varKo && /행|row/i.test(varKo + (ed.forVar || ""))) return "데이터 시작 행";
-      return "반복 시작 값";
+      if (looksLikeRow) return "처음 시작 행";
+      return "시작 번호";
     }
-    if (role === "step") return "증가폭";
+    if (role === "step") return "몇씩 증가";
   }
   // 8. If 비교 우변
   if (ed.fromIfRhs) {
     const lhs = ed.lhsLabel;
     if (lhs && lhs.length > 1) {
       const ko = identToKorean(lhs);
-      if (ko) return ko + " 임계값";
+      if (ko) return ko + " 기준 숫자";
     }
-    if (ctx.sectionHeader) return ctx.sectionHeader + " 임계값";
-    return "조건 임계값";
+    if (ctx.sectionHeader) return ctx.sectionHeader + " 기준";
+    return "비교 기준 값";
   }
   // 9. Const / 단순 할당 — 변수명 한국어
   if (ed.fromConst || ed.fromAssign) {
@@ -1603,6 +1731,78 @@ const $summary = document.getElementById("summary");
 const $status = document.getElementById("status");
 const $copy = document.getElementById("copy-btn");
 const $reset = document.getElementById("reset-btn");
+const $highlight = document.getElementById("src-highlight");
+
+let activeHighlightLine = null;
+let activeHighlightLineHeight = 22;
+let activeHighlightPadTop = 14;
+let activeHighlightLineCount = 1;
+
+function getCurrentOffsets(targetEd) {
+  const sorted = [...state.editables].sort((a, b) => a.range[0] - b.range[0]);
+  let shift = 0;
+  for (const e of sorted) {
+    if (e.id === targetEd.id) {
+      const start = e.range[0] + shift;
+      const len = state.edits.has(e.id) ? state.edits.get(e.id).length : e.raw.length;
+      return [start, start + len];
+    }
+    if (state.edits.has(e.id)) {
+      shift += state.edits.get(e.id).length - e.raw.length;
+    }
+  }
+  return [targetEd.range[0] + shift, targetEd.range[1] + shift];
+}
+
+function updateHighlightPos() {
+  if (activeHighlightLine == null) return;
+  const top = activeHighlightLine * activeHighlightLineHeight + activeHighlightPadTop - $src.scrollTop;
+  $highlight.style.top = top + "px";
+  $highlight.style.height = (activeHighlightLineHeight * activeHighlightLineCount) + "px";
+}
+
+function highlightInSource(ed) {
+  const [start, end] = getCurrentOffsets(ed);
+  const value = $src.value;
+  const before = value.slice(0, start);
+  const startLine = (before.match(/\n/g) || []).length;
+  const inner = value.slice(start, end);
+  const lineCount = ((inner.match(/\n/g) || []).length) + 1;
+
+  const cs = getComputedStyle($src);
+  const lh = parseFloat(cs.lineHeight) || 22;
+  const padTop = parseFloat(cs.paddingTop) || 14;
+
+  activeHighlightLine = startLine;
+  activeHighlightLineHeight = lh;
+  activeHighlightPadTop = padTop;
+  activeHighlightLineCount = lineCount;
+
+  // 화면 중앙쯤으로 스크롤
+  const targetTop = startLine * lh + padTop - $src.clientHeight / 2 + lh / 2;
+  $src.scrollTop = Math.max(0, targetTop);
+
+  // 위치 갱신 + 표시
+  requestAnimationFrame(() => {
+    updateHighlightPos();
+    $highlight.classList.add("visible");
+  });
+
+  // 카드 active 표시
+  $controls.querySelectorAll(".card.active").forEach(el => el.classList.remove("active"));
+  const card = $controls.querySelector(`[data-widget-id="${ed.id}"]`);
+  if (card) card.classList.add("active");
+}
+
+$src.addEventListener("scroll", updateHighlightPos);
+window.addEventListener("resize", updateHighlightPos);
+$src.addEventListener("input", () => {
+  // 사용자가 코드 직접 편집하면 강조 숨김
+  if (suppressInput) return;
+  $highlight.classList.remove("visible");
+  activeHighlightLine = null;
+  $controls.querySelectorAll(".card.active").forEach(el => el.classList.remove("active"));
+});
 
 let analyzeTimer = null;
 let suppressInput = false;
@@ -1791,12 +1991,17 @@ function renderWidget(ed) {
       ? `<span class="badge" style="background:rgba(232,138,135,0.12);color:var(--danger);">코드 내부</span>`
       : "";
 
+  const descLine = ed.description
+    ? `<div class="setting-desc">${escapeHtml(ed.description)}</div>`
+    : "";
+
   return `<div class="card ${changed ? "changed" : ""}" data-widget-id="${ed.id}">
     <div class="setting-label">
       <span>${escapeHtml(ed.label)}</span>
       ${tierBadge}
       <span class="changed-chip" style="${changed ? "" : "display:none"}">변경됨</span>
     </div>
+    ${descLine}
     ${control}
     <div data-role="diff-slot">${diffLine}</div>
     <details class="setting-context">
@@ -1809,6 +2014,11 @@ function renderWidget(ed) {
 function bindWidget(ed) {
   const root = $controls.querySelector(`[data-widget-id="${ed.id}"]`);
   if (!root) return;
+
+  // 카드 어디든 클릭하면 코드의 해당 줄 강조
+  root.addEventListener("click", (e) => {
+    highlightInSource(ed);
+  });
 
   if (ed.kind === "number") {
     const num = root.querySelector('[data-role="num"]');
