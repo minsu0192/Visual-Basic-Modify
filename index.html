@@ -676,6 +676,16 @@ const FUNC_LABELS = {
   findnext:   ["찾을 값"],
   replace:    ["찾을 값", "바꿀 값"],
   open:       ["파일 경로"],
+  pivotcaches: ["피벗 캐시 번호"],
+  pivottables: ["피벗테이블 이름"],
+  pivotfields: ["피벗 필드 이름"],
+  pivotitems:  ["피벗 항목 이름"],
+  slicercaches: ["슬라이서 이름"],
+  chartobjects: ["차트 이름"],
+  charts:      ["차트 이름"],
+  shapes:      ["도형 이름"],
+  slides:      ["슬라이드 번호"],
+  presentations: ["프레젠테이션 이름"],
   mid:        [null, "시작 위치", "잘라낼 길이"],
   left:       [null, "잘라낼 길이"],
   right:      [null, "잘라낼 길이"],
@@ -699,11 +709,27 @@ const NAMED_ARG_LABELS = {
   after:       "이후 위치",
   matchcase:   "대소문자 구분",
   lookat:      "찾기 방식",
+  sourcedata:  "원본 데이터 범위",
+  sourcetype:  "원본 데이터 종류",
+  tabledestination: "피벗 생성 위치",
+  tablename:   "피벗테이블 이름",
+  defaultversion: "기본 버전",
+  orientation: "피벗 필드 위치",
+  position:    "표시 순서",
+  caption:     "표시 이름",
+  layout:      "슬라이드 레이아웃",
+  index:       "위치 번호",
+  left:        "왼쪽 위치",
+  top:         "위쪽 위치",
+  width:       "너비",
+  height:      "높이",
+  linktofile:  "파일 연결",
+  savewithdocument: "문서에 함께 저장",
 };
 
 const SAFE_FUNCS = new Set([
   "sheets","worksheets","workbooks","range","dir","instr","find","findnext",
-  "replace","msgbox","inputbox","open",
+  "replace","msgbox","inputbox","open","createobject","getobject",
 ]);
 
 // ============================================================
@@ -1361,6 +1387,302 @@ function makeEditable(opts) {
 // ============================================================
 // 줄 역할 설명 (이 줄이 무슨 일을 하는 코드인지)
 // ============================================================
+function excelTargetName(line) {
+  if (/\bPivot(Cache|Caches|Table|Tables|Field|Fields|Item|Items)\b/i.test(line)) return "피벗테이블";
+  if (/\b(Chart|Charts|ChartObject|ChartObjects)\b/i.test(line)) return "차트";
+  if (/\b(SlicerCache|SlicerCaches|Slicer)\b/i.test(line)) return "슬라이서";
+  if (/\.(Rows|EntireRow)\s*(\(|\.)/i.test(line)) return "행";
+  if (/\.(Columns|EntireColumn)\s*(\(|\.)/i.test(line)) return "열";
+  if (/\.(Cells)\s*\(/i.test(line) || /\bCells\s*\(/i.test(line)) return "셀";
+  if (/\.(Range)\s*\(/i.test(line) || /\bRange\s*\(/i.test(line)) return "셀 범위";
+  if (/\.(Sheets|Worksheets)\s*\(/i.test(line) || /\b(Sheets|Worksheets)\s*\(/i.test(line)) return "시트";
+  if (/\bWorkbooks\s*\(/i.test(line) || /\bActiveWorkbook\b|\bThisWorkbook\b/i.test(line)) return "통합문서";
+  return "대상";
+}
+
+function hasExcelTarget(line) {
+  return /\.(Range|Cells|Rows|Columns|EntireRow|EntireColumn|Sheets|Worksheets)\s*(\(|\.)/i.test(line)
+    || /\b(Range|Cells|Rows|Columns|Sheets|Worksheets)\s*\(/i.test(line)
+    || /\b(PivotCaches|PivotTables|PivotFields|PivotItems|SlicerCaches|ChartObjects|Charts)\s*\(/i.test(line)
+    || /\b(ActiveSheet|ActiveWorkbook|ThisWorkbook)\b/i.test(line);
+}
+
+function explainOfficeAutomationAction(line) {
+  // Excel 피벗/분석 자동화
+  if (/\bPivotCaches\.Create\b/i.test(line)) return "피벗테이블을 만들 원본 데이터 캐시를 준비해요";
+  if (/\.CreatePivotTable\b/i.test(line)) return "원본 데이터로 새 피벗테이블을 만들어요";
+  if (/\.PivotTableWizard\b/i.test(line)) return "선택한 데이터로 피벗테이블을 만들어요";
+  if (/\bPivotTables\s*\(.*\)\.RefreshTable\b/i.test(line)) return "피벗테이블 데이터를 새로 고쳐요";
+  if (/\bPivotTables\s*\(.*\)\.ChangePivotCache\b/i.test(line)) return "피벗테이블의 원본 데이터 범위를 바꿔요";
+  if (/\bPivotTables\s*\(.*\)\.ClearTable\b/i.test(line)) return "피벗테이블의 필드 배치를 비워요";
+  if (/\bPivotTables\s*\(.*\)\.PivotCache\.Refresh\b/i.test(line)) return "피벗테이블의 원본 데이터를 새로 고쳐요";
+  if (/\.AddDataField\b/i.test(line)) return "피벗테이블에 값 필드를 추가해요";
+  if (/\.CalculatedFields\.Add\b/i.test(line)) return "피벗테이블에 계산 필드를 추가해요";
+  if (/\bPivotFields\s*\(.*\)\.Orientation\s*=/i.test(line)) return "피벗 필드를 행/열/값/필터 영역 중 어디에 둘지 정해요";
+  if (/\bPivotFields\s*\(.*\)\.Position\s*=/i.test(line)) return "피벗 필드의 표시 순서를 정해요";
+  if (/\bPivotFields\s*\(.*\)\.Function\s*=/i.test(line)) return "피벗 값 필드의 집계 방식(합계, 개수 등)을 정해요";
+  if (/\bPivotFields\s*\(.*\)\.NumberFormat\s*=/i.test(line)) return "피벗 값 필드의 표시 형식을 바꿔요";
+  if (/\bPivotItems\s*\(.*\)\.Visible\s*=/i.test(line)) return "피벗 항목을 보이거나 숨겨요";
+  if (/\bSlicerCaches\.Add/i.test(line) || /\bSlicerCaches\.Add2/i.test(line)) return "피벗테이블에 연결할 슬라이서를 만들어요";
+  if (/\bSlicerCaches\s*\(.*\)\.ClearManualFilter\b/i.test(line)) return "슬라이서에서 수동 필터를 지워요";
+  if (/\bActiveWorkbook\.RefreshAll\b/i.test(line) || /\.RefreshAll\b/i.test(line)) return "통합문서의 쿼리, 연결, 피벗 데이터를 모두 새로 고쳐요";
+  if (/\bQueryTables\.Add\b/i.test(line)) return "외부 데이터 연결 쿼리를 시트에 추가해요";
+  if (/\bListObjects\.Add\b/i.test(line)) return "범위를 엑셀 표로 만들거나 외부 데이터 표를 추가해요";
+  if (/\bListObjects\s*\(.*\)\.QueryTable\.Refresh\b/i.test(line)) return "표에 연결된 외부 데이터를 새로 고쳐요";
+  if (/\bListObjects\s*\(.*\)\.Resize\b/i.test(line)) return "엑셀 표의 범위를 새 크기로 조정해요";
+  if (/\bChartObjects\.Add\b/i.test(line) || /\bCharts\.Add\b/i.test(line)) return "새 차트를 만들어요";
+  if (/\.SetSourceData\b/i.test(line)) return "차트에 사용할 원본 데이터 범위를 지정해요";
+  if (/\.ChartType\s*=/i.test(line)) return "차트 종류를 바꿔요";
+  if (/\.HasTitle\s*=/i.test(line)) return "차트 제목 표시 여부를 정해요";
+  if (/\.ChartTitle\.Text\s*=/i.test(line)) return "차트 제목 문구를 바꿔요";
+  if (/\.Axes\s*\(.*\)\.HasTitle\s*=/i.test(line)) return "차트 축 제목 표시 여부를 정해요";
+  if (/\.Export\b/i.test(line) && /\bChart/i.test(line)) return "차트를 이미지 파일로 내보내요";
+
+  // PowerPoint 자동화
+  if (/\bCreateObject\s*\(\s*"PowerPoint\.Application"/i.test(line)) return "PowerPoint 프로그램을 새로 실행해요";
+  if (/\bGetObject\s*\(.*"PowerPoint\.Application"/i.test(line)) return "이미 실행 중인 PowerPoint에 연결해요";
+  if (/\bPresentations\.Open\b/i.test(line)) return "PowerPoint 프레젠테이션 파일을 열어요";
+  if (/\bPresentations\.Add\b/i.test(line)) return "새 PowerPoint 프레젠테이션을 만들어요";
+  if (/\bPresentations\s*\(.*\)\.Close\b/i.test(line) || /\.Presentation\.Close\b/i.test(line)) return "PowerPoint 프레젠테이션을 닫아요";
+  if (/\.Slides\.Add\b/i.test(line) || /\bSlides\.Add\b/i.test(line)) return "프레젠테이션에 새 슬라이드를 추가해요";
+  if (/\bSlides\s*\(.*\)\.Delete\b/i.test(line)) return "선택한 슬라이드를 삭제해요";
+  if (/\bSlides\s*\(.*\)\.MoveTo\b/i.test(line)) return "슬라이드 순서를 옮겨요";
+  if (/\bSlides\s*\(.*\)\.Copy\b/i.test(line)) return "슬라이드를 복사해요";
+  if (/\bSlides\s*\(.*\)\.Export\b/i.test(line)) return "슬라이드를 이미지 파일로 내보내요";
+  if (/\.Shapes\.PasteSpecial\b/i.test(line)) return "복사한 엑셀 표나 차트를 슬라이드에 특별한 형식으로 붙여넣어요";
+  if (/\.Shapes\.Paste\b/i.test(line)) return "복사한 내용을 슬라이드에 붙여넣어요";
+  if (/\.Shapes\.AddPicture\b/i.test(line)) return "슬라이드에 그림 파일을 넣어요";
+  if (/\.Shapes\.AddChart/i.test(line)) return "슬라이드에 차트를 추가해요";
+  if (/\.Shapes\.AddTable/i.test(line)) return "슬라이드에 표를 추가해요";
+  if (/\.Shapes\.AddTextbox/i.test(line)) return "슬라이드에 텍스트 상자를 추가해요";
+  if (/\bShapes\s*\(.*\)\.TextFrame.*\.Text\s*=/i.test(line)) return "슬라이드 도형 안의 텍스트를 바꿔요";
+  if (/\bShapes\s*\(.*\)\.(Left|Top|Width|Height)\s*=/i.test(line)) return "슬라이드 도형의 위치나 크기를 조정해요";
+  if (/\bShapes\s*\(.*\)\.Delete\b/i.test(line)) return "슬라이드 도형을 삭제해요";
+  if (/\bShapes\s*\(.*\)\.Copy\b/i.test(line)) return "슬라이드 도형을 복사해요";
+  if (/\.SlideShowSettings\.Run\b/i.test(line)) return "PowerPoint 슬라이드 쇼를 실행해요";
+  if (/\.ExportAsFixedFormat\b/i.test(line) && /(Presentation|Presentations|ppt|PowerPoint)/i.test(line)) return "프레젠테이션을 PDF 같은 고정 형식 파일로 내보내요";
+  if (/\.SaveAs\b/i.test(line) && /(Presentation|Presentations|ppt|PowerPoint)/i.test(line)) return "PowerPoint 파일을 다른 이름이나 형식으로 저장해요";
+
+  return null;
+}
+
+function explainExcelVbaAction(line) {
+  const target = excelTargetName(line);
+  const officeAction = explainOfficeAutomationAction(line);
+  if (officeAction) return officeAction;
+
+  // 값 읽기/쓰기
+  if (/=\s*.+\.(Range|Cells)\s*\(.*\)\.(Value|Value2|Text)\s*$/i.test(line)
+      || /=\s*(Range|Cells)\s*\(.*\)\.(Value|Value2|Text)\s*$/i.test(line)) {
+    return `${target}의 값을 읽어와 변수에 담아요`;
+  }
+  if (/\.(Range|Cells)\s*\(.*\)\.(Value|Value2)\s*=/i.test(line)
+      || /\b(Range|Cells)\s*\(.*\)\.(Value|Value2)\s*=/i.test(line)) {
+    return `${target}에 값을 써넣어요`;
+  }
+  if (/\.(Range|Cells)\s*\(.*\)\.Formula(R1C1)?\s*=/i.test(line)
+      || /\b(Range|Cells)\s*\(.*\)\.Formula(R1C1)?\s*=/i.test(line)) {
+    return `${target}에 수식을 넣어요`;
+  }
+
+  // 셀/행/열 조작
+  const actionRules = [
+    [/\.ClearContents\b/i, `${target}의 내용만 지워요`],
+    [/\.ClearFormats\b/i, `${target}의 서식만 지워요`],
+    [/\.ClearComments\b/i, `${target}의 메모를 지워요`],
+    [/\.Clear\b/i, `${target}의 내용과 서식을 지워요`],
+    [/\.Copy\b/i, `${target}를 복사해요`],
+    [/\.Cut\b/i, `${target}를 잘라내요`],
+    [/\.PasteSpecial\b/i, `복사한 내용을 선택한 위치에 특별한 방식으로 붙여넣어요`],
+    [/\.Delete\b/i, `${target}를 삭제해요`],
+    [/\.Insert\b/i, `${target}를 새로 삽입해요`],
+    [/\.Sort\b/i, `${target}를 정렬해요`],
+    [/\.AutoFilter\b/i, `${target}에 자동 필터를 적용해요`],
+    [/\.Find\s*\(/i, `${target} 안에서 값을 찾아요`],
+    [/\.Replace\s*\(/i, `${target} 안의 값을 찾아 바꿔요`],
+    [/\.Select\b/i, `${target}를 선택해요`],
+    [/\.Activate\b/i, `${target}를 활성화해요`],
+    [/\.Merge\b/i, `${target}를 병합해요`],
+    [/\.UnMerge\b/i, `병합된 ${target}를 다시 나눠요`],
+    [/\.AutoFit\b/i, `${target}의 너비나 높이를 내용에 맞춰 조정해요`],
+    [/\.RemoveDuplicates\b/i, `${target}에서 중복 값을 제거해요`],
+    [/\.TextToColumns\b/i, `${target}의 텍스트를 여러 열로 나눠요`],
+    [/\.Subtotal\b/i, `${target}에 부분합을 넣어요`],
+    [/\.AdvancedFilter\b/i, `${target}에 고급 필터를 적용해요`],
+    [/\.FillDown\b/i, `${target}의 위쪽 값을 아래로 채워 넣어요`],
+    [/\.FillRight\b/i, `${target}의 왼쪽 값을 오른쪽으로 채워 넣어요`],
+    [/\.Calculate\b/i, `${target}를 다시 계산해요`],
+  ];
+  for (const [re, text] of actionRules) {
+    if (re.test(line)) return text;
+  }
+
+  // 서식 변경
+  const formatRules = [
+    [/\.NumberFormat(Local)?\s*=/i, `${target}의 표시 형식을 바꿔요`],
+    [/\.Interior\.Color(Index)?\s*=/i, `${target}의 배경색을 바꿔요`],
+    [/\.Font\.Color(Index)?\s*=/i, `${target}의 글자색을 바꿔요`],
+    [/\.Font\.Bold\s*=/i, `${target}의 글자를 굵게 할지 정해요`],
+    [/\.Font\.Italic\s*=/i, `${target}의 글자를 기울임으로 할지 정해요`],
+    [/\.Font\.Size\s*=/i, `${target}의 글자 크기를 바꿔요`],
+    [/\.Font\.Name\s*=/i, `${target}의 글꼴을 바꿔요`],
+    [/\.HorizontalAlignment\s*=/i, `${target}의 가로 정렬을 바꿔요`],
+    [/\.VerticalAlignment\s*=/i, `${target}의 세로 정렬을 바꿔요`],
+    [/\.WrapText\s*=/i, `${target}에서 줄 바꿈 표시 여부를 정해요`],
+    [/\.Borders\b/i, `${target}의 테두리 서식을 바꿔요`],
+    [/\.RowHeight\s*=/i, `${target}의 행 높이를 바꿔요`],
+    [/\.ColumnWidth\s*=/i, `${target}의 열 너비를 바꿔요`],
+    [/\.Hidden\s*=/i, `${target}를 숨기거나 다시 보여줘요`],
+  ];
+  for (const [re, text] of formatRules) {
+    if (re.test(line)) return text;
+  }
+
+  // 위치/크기 계산
+  if (/\.(End|Offset|Resize)\s*\(/i.test(line)) {
+    if (/\.End\s*\(\s*xlUp\s*\)/i.test(line)) return "아래쪽에서 위로 올라가며 마지막으로 값이 있는 위치를 찾아요";
+    if (/\.End\s*\(\s*xlDown\s*\)/i.test(line)) return "위쪽에서 아래로 내려가며 마지막으로 이어진 값의 위치를 찾아요";
+    if (/\.End\s*\(\s*xlToLeft\s*\)/i.test(line)) return "오른쪽에서 왼쪽으로 가며 마지막으로 값이 있는 위치를 찾아요";
+    if (/\.End\s*\(\s*xlToRight\s*\)/i.test(line)) return "왼쪽에서 오른쪽으로 가며 마지막으로 이어진 값의 위치를 찾아요";
+    if (/\.Offset\s*\(/i.test(line)) return `${target}에서 행이나 열을 이동한 위치를 가리켜요`;
+    if (/\.Resize\s*\(/i.test(line)) return `${target}의 크기를 행/열 개수에 맞게 다시 잡아요`;
+  }
+
+  // 시트 조작
+  if (/\.(Sheets|Worksheets)\s*\(.*\)\.Name\s*=/i.test(line)) return "시트 이름을 바꿔요";
+  if (/\.(Sheets|Worksheets)\s*\(.*\)\.Copy\b/i.test(line)) return "시트를 복사해요";
+  if (/\.(Sheets|Worksheets)\s*\(.*\)\.Move\b/i.test(line)) return "시트 위치를 옮겨요";
+  if (/\.(Sheets|Worksheets)\s*\(.*\)\.Delete\b/i.test(line)) return "시트를 삭제해요";
+  if (/\.(Sheets|Worksheets)\s*\(.*\)\.Protect\b/i.test(line)) return "시트를 보호해요";
+  if (/\.(Sheets|Worksheets)\s*\(.*\)\.Unprotect\b/i.test(line)) return "시트 보호를 해제해요";
+  if (/\.(Sheets|Worksheets)\.Add\b/i.test(line)) return "새 시트를 추가해요";
+
+  // 통합문서/출력
+  if (/\bWorkbooks\.Open\b/i.test(line)) return "외부 엑셀 파일을 열어요";
+  if (/\bWorkbooks\.Add\b/i.test(line)) return "새 엑셀 파일을 만들어요";
+  if (/\.SaveAs\b/i.test(line)) return "파일을 다른 이름이나 위치로 저장해요";
+  if (/\.SaveCopyAs\b/i.test(line)) return "현재 파일의 복사본을 저장해요";
+  if (/\.Save\b/i.test(line)) return "파일을 저장해요";
+  if (/\.Close\s+SaveChanges\s*:?=?\s*False/i.test(line)) return "변경 사항을 저장하지 않고 파일을 닫아요";
+  if (/\.Close\s+SaveChanges\s*:?=?\s*True/i.test(line)) return "변경 사항을 저장하고 파일을 닫아요";
+  if (/\.Close\b/i.test(line)) return "파일을 닫아요";
+  if (/\.PrintOut\b/i.test(line)) return "대상을 인쇄해요";
+  if (/\.ExportAsFixedFormat\b/i.test(line)) return "대상을 PDF 같은 고정 형식 파일로 내보내요";
+  if (/\.Refresh(All)?\b/i.test(line)) return "연결된 데이터나 쿼리를 새로 고쳐요";
+
+  if (hasExcelTarget(line)) return `${target}를 다루는 Excel VBA 줄이에요`;
+  return null;
+}
+
+function describeExcelVbaValueUse(ed) {
+  const raw = ed.context.line;
+  if (!raw) return null;
+  const line = raw.trim().replace(/\s*'[^\n]*$/, "").trim();
+  const fn = ed.funcName;
+  const isRangeLike = fn === "range" || fn === "cells";
+  const isSheet = fn === "sheets" || fn === "worksheets";
+  const isWorkbook = fn === "workbooks";
+  const isPivot = fn === "pivottables" || fn === "pivotfields" || fn === "pivotitems" || fn === "pivotcaches" || fn === "slicercaches";
+  const isPresentation = fn === "presentations" || fn === "slides" || fn === "shapes";
+  const isChart = fn === "charts" || fn === "chartobjects";
+
+  if (isRangeLike) {
+    const unit = fn === "cells" ? "셀" : "범위";
+    if (/\.ClearContents\b/i.test(line)) return `이 ${unit}의 내용을 지워요`;
+    if (/\.ClearFormats\b/i.test(line)) return `이 ${unit}의 서식을 지워요`;
+    if (/\.ClearComments\b/i.test(line)) return `이 ${unit}의 메모를 지워요`;
+    if (/\.Clear\b/i.test(line)) return `이 ${unit}의 내용과 서식을 지워요`;
+    if (/\.Copy\b/i.test(line)) return `이 ${unit}를 복사해요`;
+    if (/\.Cut\b/i.test(line)) return `이 ${unit}를 잘라내요`;
+    if (/\.Delete\b/i.test(line)) return `이 ${unit}를 삭제해요`;
+    if (/\.Insert\b/i.test(line)) return `이 ${unit} 위치에 새 셀이나 행/열을 넣어요`;
+    if (/\.Sort\b/i.test(line)) return `이 ${unit}를 정렬해요`;
+    if (/\.AutoFilter\b/i.test(line)) return `이 ${unit}에 필터를 적용해요`;
+    if (/\.Find\s*\(/i.test(line)) return `이 ${unit} 안에서 값을 찾아요`;
+    if (/\.Replace\s*\(/i.test(line)) return `이 ${unit} 안의 값을 찾아 바꿔요`;
+    if (/\.Select\b/i.test(line)) return `이 ${unit}를 선택해요`;
+    if (/\.Merge\b/i.test(line)) return `이 ${unit}를 병합해요`;
+    if (/\.UnMerge\b/i.test(line)) return `이 ${unit}의 병합을 해제해요`;
+    if (/\.PasteSpecial\b/i.test(line)) return `복사한 내용을 이 ${unit}에 특별한 방식으로 붙여넣어요`;
+    if (/\.(Value|Value2)\s*=/i.test(line)) return `이 ${unit}에 값을 써넣어요`;
+    if (/\.Formula(R1C1)?\s*=/i.test(line)) return `이 ${unit}에 수식을 넣어요`;
+    if (/=\s*.+\.(Value|Value2|Text)\s*$/i.test(line)) return `이 ${unit}에서 값을 읽어와요`;
+    if (/\.NumberFormat(Local)?\s*=/i.test(line)) return `이 ${unit}의 표시 형식을 바꿔요`;
+    if (/\.Interior\.Color(Index)?\s*=/i.test(line)) return `이 ${unit}의 배경색을 바꿔요`;
+    if (/\.Font\./i.test(line)) return `이 ${unit}의 글자 서식을 바꿔요`;
+    if (/\.Borders\b/i.test(line)) return `이 ${unit}의 테두리 서식을 바꿔요`;
+  }
+
+  if (isSheet) {
+    if (/\.Delete\b/i.test(line)) return "이 시트를 삭제해요";
+    if (/\.Copy\b/i.test(line)) return "이 시트를 복사해요";
+    if (/\.Move\b/i.test(line)) return "이 시트 위치를 옮겨요";
+    if (/\.Name\s*=/i.test(line)) return "이 시트의 이름을 바꿔요";
+    if (/\.Protect\b/i.test(line)) return "이 시트를 보호해요";
+    if (/\.Unprotect\b/i.test(line)) return "이 시트의 보호를 해제해요";
+    if (/\.Range\s*\(.*\)\.ClearContents\b/i.test(line)) return "이 시트의 지정 범위 내용을 지워요";
+    if (/\.Range\s*\(.*\)\.Copy\b/i.test(line)) return "이 시트의 지정 범위를 복사해요";
+    if (/\.Range\s*\(.*\)\.(Value|Value2)\s*=/i.test(line)) return "이 시트의 지정 범위에 값을 써넣어요";
+  }
+
+  if (isWorkbook) {
+    if (/\.Open\b/i.test(line) || /\bWorkbooks\.Open\b/i.test(line)) return "이 엑셀 파일을 열어요";
+    if (/\.Close\b/i.test(line)) return "이 엑셀 파일을 닫아요";
+    if (/\.Save\b/i.test(line)) return "이 엑셀 파일을 저장해요";
+  }
+
+  if (isPivot) {
+    if (fn === "pivottables") {
+      if (/\.RefreshTable\b/i.test(line)) return "이 피벗테이블 데이터를 새로 고쳐요";
+      if (/\.ChangePivotCache\b/i.test(line)) return "이 피벗테이블의 원본 데이터를 바꿔요";
+      if (/\.ClearTable\b/i.test(line)) return "이 피벗테이블의 필드 배치를 비워요";
+      return "이 이름의 피벗테이블을 대상으로 작업해요";
+    }
+    if (fn === "pivotfields") {
+      if (/\.Orientation\s*=/i.test(line)) return "이 피벗 필드를 행/열/값/필터 영역에 배치해요";
+      if (/\.Function\s*=/i.test(line)) return "이 피벗 필드의 집계 방식을 정해요";
+      if (/\.NumberFormat\s*=/i.test(line)) return "이 피벗 필드의 표시 형식을 바꿔요";
+      return "이 이름의 피벗 필드를 대상으로 작업해요";
+    }
+    if (fn === "pivotitems") {
+      if (/\.Visible\s*=/i.test(line)) return "이 피벗 항목을 보이거나 숨겨요";
+      return "이 이름의 피벗 항목을 대상으로 작업해요";
+    }
+    if (fn === "slicercaches") return "이 슬라이서나 슬라이서 캐시를 대상으로 작업해요";
+  }
+
+  if (isChart) {
+    if (/\.SetSourceData\b/i.test(line)) return "이 차트에 사용할 원본 데이터를 지정해요";
+    if (/\.ChartType\s*=/i.test(line)) return "이 차트의 종류를 바꿔요";
+    if (/\.Export\b/i.test(line)) return "이 차트를 이미지 파일로 내보내요";
+    return "이 차트를 대상으로 작업해요";
+  }
+
+  if (isPresentation) {
+    if (fn === "presentations") {
+      if (/\.Open\b/i.test(line)) return "이 PowerPoint 파일을 열어요";
+      if (/\.Close\b/i.test(line)) return "이 PowerPoint 파일을 닫아요";
+      if (/\.SaveAs\b/i.test(line)) return "이 PowerPoint 파일을 저장해요";
+      return "이 프레젠테이션을 대상으로 작업해요";
+    }
+    if (fn === "slides") {
+      if (/\.Delete\b/i.test(line)) return "이 슬라이드를 삭제해요";
+      if (/\.Copy\b/i.test(line)) return "이 슬라이드를 복사해요";
+      if (/\.MoveTo\b/i.test(line)) return "이 슬라이드의 순서를 옮겨요";
+      return "이 슬라이드를 대상으로 작업해요";
+    }
+    if (fn === "shapes") {
+      if (/\.TextFrame.*\.Text\s*=/i.test(line)) return "이 도형 안의 텍스트를 바꿔요";
+      if (/\.(Left|Top|Width|Height)\s*=/i.test(line)) return "이 도형의 위치나 크기를 조정해요";
+      if (/\.Delete\b/i.test(line)) return "이 도형을 삭제해요";
+      if (/\.Copy\b/i.test(line)) return "이 도형을 복사해요";
+      return "이 슬라이드 도형을 대상으로 작업해요";
+    }
+  }
+
+  return null;
+}
+
 function lineRole(ed) {
   const raw = ed.context.line;
   if (!raw) return null;
@@ -1397,6 +1719,12 @@ function lineRole(ed) {
   if (/^Set\s+\w+\s*=\s*ActiveWorkbook\b/i.test(line)) return "지금 열려 있는 통합문서를 변수에 담아 둬요";
   if (/^Set\s+\w+\s*=\s*ThisWorkbook\b/i.test(line)) return "지금 매크로가 들어 있는 파일을 변수에 담아 둬요";
   if (/^Set\s+\w+\s*=\s*Workbooks\.Open/i.test(line)) return "외부 엑셀 파일을 열어서 변수에 담아 둬요";
+  if (/^Set\s+\w+\s*=\s*.*PivotCaches\.Create\b/i.test(line)) return "피벗테이블을 만들 원본 데이터 캐시를 변수에 담아 둬요";
+  if (/^Set\s+\w+\s*=\s*.*CreatePivotTable\b/i.test(line)) return "새로 만든 피벗테이블을 변수에 담아 둬요";
+  if (/^Set\s+\w+\s*=\s*.*Presentations\.Open\b/i.test(line)) return "PowerPoint 파일을 열어서 변수에 담아 둬요";
+  if (/^Set\s+\w+\s*=\s*.*Presentations\.Add\b/i.test(line)) return "새 PowerPoint 프레젠테이션을 변수에 담아 둬요";
+  if (/^Set\s+\w+\s*=\s*.*Slides\.Add\b/i.test(line)) return "새 슬라이드를 만들고 변수에 담아 둬요";
+  if (/^Set\s+\w+\s*=\s*.*Shapes\.(Paste|PasteSpecial|AddPicture|AddTextbox|AddChart|AddTable)\b/i.test(line)) return "슬라이드에 넣은 개체를 변수에 담아 둬요";
   if (/^Set\s+\w+\s*=.*\.(Sheets|Worksheets)\s*\(/i.test(line)) return "통합문서 안의 특정 시트를 변수에 담아 둬요";
   if (/^Set\s+\w+\s*=.*\.Range\s*\(/i.test(line)) return "특정 셀 범위를 변수에 담아 둬요";
   if (/^Set\s+/i.test(line)) return "객체(시트, 파일, 셀 등)를 변수에 담아 두는 줄이에요";
@@ -1434,20 +1762,8 @@ function lineRole(ed) {
   if (/=\s*Dir\s*\(/i.test(line)) return "폴더에서 패턴에 맞는 파일을 찾아 변수에 담아요";
   if (/=\s*ThisWorkbook\.Path/i.test(line) || /=\s*ActiveWorkbook\.Path/i.test(line)) return "지금 매크로가 들어있는 폴더의 경로를 변수에 담아요";
 
-  // Range/Cell 패턴 (대입 / 읽기)
-  if (/=\s*\w+\.Range\s*\(.*\)\.Value\s*$/i.test(line)) return "지정한 셀 범위의 값을 읽어와 변수에 담아요";
-  if (/=\s*\w+\.Cells\s*\(.*\)\.Value\s*$/i.test(line)) return "특정 셀의 값을 읽어와 변수에 담아요";
-  if (/\.Range\s*\(.*\)\.Resize\s*\(.*\)\.Value\s*=/i.test(line)) return "현재 시트에 맞춰 값들을 한 번에 써넣어요";
-  if (/\.Range\s*\(.*\)\.Value\s*=/i.test(line)) return "지정한 셀에 값을 써넣어요";
-  if (/\.Cells\s*\(.*\)\.Value\s*=/i.test(line)) return "특정 셀에 값을 써넣어요";
-  if (/\.Range\s*\(.*\)\.Copy\b/i.test(line)) return "셀 범위를 복사해요";
-  if (/\.Range\s*\(.*\)\.Sort\b/i.test(line)) return "셀 범위를 정렬해요";
-  if (/\.Range\s*\(.*\)\.AutoFilter\b/i.test(line)) return "자동 필터를 켜거나 적용해요";
-  if (/\.Range\s*\(.*\)\.Find\s*\(/i.test(line)) return "셀 범위 안에서 값을 찾아요";
-  if (/\.Range\s*\(.*\)\.Delete\b/i.test(line)) return "셀 범위를 삭제해요";
-  if (/\.Rows\s*\(.*\)\.Delete\b/i.test(line)) return "행을 삭제해요";
-  if (/\.Columns\s*\(.*\)\.Delete\b/i.test(line)) return "열을 삭제해요";
-  if (/\.PasteSpecial\b/i.test(line)) return "복사한 내용을 특별한 방식으로 붙여넣어요";
+  const excelAction = explainExcelVbaAction(line);
+  if (excelAction) return excelAction;
 
   // InStr (검색)
   if (/\bInStr\s*\(/i.test(line)) return "텍스트 안에서 단어를 찾는 줄이에요";
@@ -1464,7 +1780,7 @@ function lineRole(ed) {
   if (/^\w+\s*=\s*\w+\s*\+\s*1\s*$/.test(line)) return "다음 위치(현재 위치 + 1)를 변수에 저장해요";
   if (/^\w+\s*=/i.test(line)) return "변수에 값을 저장하는 줄이에요";
 
-  return "이 줄에서 위 값이 사용돼요";
+  return "아직 자동 설명이 준비되지 않은 VBA 동작이에요";
 }
 
 // ============================================================
@@ -1481,10 +1797,24 @@ function describe(ed) {
     if (n === "password") return "이 비밀번호로 파일을 열어요";
     if (n === "filename" || n === "filepath") return "이 위치의 파일을 다뤄요";
     if (n === "destination") return "이 위치에 결과를 넣어요";
+    if (n === "sourcedata") return "피벗테이블이나 차트가 사용할 원본 데이터 범위예요";
+    if (n === "sourcetype") return "피벗테이블 원본 데이터의 종류를 정해요";
+    if (n === "tabledestination") return "피벗테이블을 만들 위치예요";
+    if (n === "tablename") return "새 피벗테이블의 이름이에요";
+    if (n === "orientation") return "피벗 필드를 행/열/값/필터 중 어디에 둘지 정해요";
+    if (n === "position") return "화면에 표시될 순서나 위치예요";
+    if (n === "layout") return "새 슬라이드의 레이아웃 종류예요";
+    if (n === "left" || n === "top") return "슬라이드나 시트 위에서 개체를 놓을 위치예요";
+    if (n === "width" || n === "height") return "개체의 크기를 정해요";
+    if (n === "linktofile") return ed.value ? "원본 파일과 연결해서 넣어요" : "원본 파일과 연결하지 않고 넣어요";
+    if (n === "savewithdocument") return ed.value ? "파일 안에 함께 저장해요" : "파일 안에 함께 저장하지 않아요";
     if (n === "prompt") return "사용자에게 보여줄 안내 문구예요";
     if (n === "title") return "창의 제목으로 보여줘요";
     if (n === "default") return "사용자가 아무것도 입력하지 않으면 이 값이 들어가요";
   }
+
+  const contextualUse = describeExcelVbaValueUse(ed);
+  if (contextualUse) return contextualUse;
 
   if (ed.fromFuncArg) {
     if (fn === "sheets" || fn === "worksheets") return "이 이름의 시트에서 작업해요";
@@ -1498,6 +1828,14 @@ function describe(ed) {
     if (fn === "find" || fn === "findnext") return "이 값을 찾아요";
     if (fn === "replace") return ed.argIndex === 0 ? "이 값을 찾아서" : "이 값으로 바꿔요";
     if (fn === "open") return "이 위치의 파일을 열어요";
+    if (fn === "pivottables") return "이 이름의 피벗테이블을 대상으로 작업해요";
+    if (fn === "pivotfields") return "이 이름의 피벗 필드를 대상으로 작업해요";
+    if (fn === "pivotitems") return "이 이름의 피벗 항목을 대상으로 작업해요";
+    if (fn === "slicercaches") return "이 이름의 슬라이서를 대상으로 작업해요";
+    if (fn === "chartobjects" || fn === "charts") return "이 이름의 차트를 대상으로 작업해요";
+    if (fn === "presentations") return "이 이름의 PowerPoint 파일을 대상으로 작업해요";
+    if (fn === "slides") return "이 번호의 슬라이드를 대상으로 작업해요";
+    if (fn === "shapes") return "이 이름의 슬라이드 도형을 대상으로 작업해요";
   }
 
   if (ed.fromConcat) {
@@ -1661,6 +1999,8 @@ function categorize(ed) {
   if (ed.namedArg) {
     const n = ed.namedArg.toLowerCase();
     if (/file|path|folder|dir/.test(n)) return "file";
+    if (/source|table|pivot|chart|field|item|cache/.test(n)) return "data";
+    if (/slide|shape|presentation|layout|left|top|width|height/.test(n)) return "presentation";
     if (/sheet|book|range/.test(n)) return "sheet";
     if (/password|key|readonly|matchcase/.test(n)) return "flag";
     if (/prompt|title|message|msg/.test(n)) return "message";
@@ -1669,6 +2009,8 @@ function categorize(ed) {
     const fn = ed.funcName;
     if (fn === "dir" || fn === "open") return "file";
     if (fn === "sheets" || fn === "worksheets" || fn === "workbooks" || fn === "range" || fn === "cells") return "sheet";
+    if (fn === "pivottables" || fn === "pivotfields" || fn === "pivotitems" || fn === "pivotcaches" || fn === "slicercaches" || fn === "chartobjects" || fn === "charts") return "data";
+    if (fn === "presentations" || fn === "slides" || fn === "shapes") return "presentation";
     if (fn === "instr" || fn === "find" || fn === "findnext" || fn === "replace") return "search";
     if (fn === "msgbox" || fn === "inputbox") return "message";
   }
@@ -1685,6 +2027,8 @@ function categorize(ed) {
     // 식별자/변수명 힌트로 추정
     const ident = (ed.ident || ed.lhsLabel || "").toLowerCase();
     if (/file|path|folder|dir/.test(ident)) return "file";
+    if (/pivot|chart|query|table|field|item|cache|source/.test(ident)) return "data";
+    if (/ppt|powerpoint|presentation|slide|shape/.test(ident)) return "presentation";
     if (/sheet|range|cell/.test(ident)) return "sheet";
     if (/msg|message|alert|info/.test(ident)) return "message";
     return "other";
@@ -1711,6 +2055,17 @@ const ACTION_PATTERNS = [
   { re: /\bWorkbooks\.Open\b/i,           text: "외부 엑셀 파일을 엽니다" },
   { re: /\bWorkbooks?\.Close\b|\.Close\s+SaveChanges/i, text: "외부 파일을 닫습니다" },
   { re: /\bDir\s*\(/i,                    text: "폴더에서 파일을 찾습니다" },
+  { re: /\bPivotCaches\.Create\b|\.CreatePivotTable\b|\.PivotTableWizard\b/i, text: "피벗테이블을 만듭니다" },
+  { re: /\bPivotTables\s*\(.*\)\.RefreshTable\b|\.PivotCache\.Refresh\b/i, text: "피벗테이블을 새로 고칩니다" },
+  { re: /\bPivotFields\s*\(.*\)\.Orientation\s*=/i, text: "피벗 필드를 배치합니다" },
+  { re: /\.AddDataField\b/i,              text: "피벗 값 필드를 추가합니다" },
+  { re: /\bQueryTables\.Add\b|\bListObjects\.Add\b/i, text: "외부 데이터나 표를 추가합니다" },
+  { re: /\bActiveWorkbook\.RefreshAll\b|\.RefreshAll\b/i, text: "연결된 데이터를 새로 고칩니다" },
+  { re: /\bChartObjects\.Add\b|\bCharts\.Add\b|\.SetSourceData\b/i, text: "차트를 만들거나 원본 데이터를 연결합니다" },
+  { re: /\bCreateObject\s*\(\s*"PowerPoint\.Application"/i, text: "PowerPoint를 실행합니다" },
+  { re: /\bPresentations\.Open\b|\bPresentations\.Add\b/i, text: "PowerPoint 파일을 열거나 만듭니다" },
+  { re: /\.Slides\.Add\b|\bSlides\.Add\b/i, text: "슬라이드를 추가합니다" },
+  { re: /\.Shapes\.(Paste|PasteSpecial|AddPicture|AddTextbox|AddChart|AddTable)\b/i, text: "슬라이드에 표, 차트, 그림, 텍스트를 넣습니다" },
   { re: /\.Copy\b/,                       text: "데이터를 복사합니다" },
   { re: /\.Resize\s*\(.*\)\.Value\s*=/i,  text: "값을 한 번에 붙여넣습니다" },
   { re: /\bMsgBox\b/i,                    text: "메시지창을 띄웁니다" },
@@ -1793,10 +2148,12 @@ function renderSource(source, editables, edits) {
 // ============================================================
 // 카테고리 메타
 // ============================================================
-const CATEGORY_ORDER = ["file","sheet","search","number","message","flag","other"];
+const CATEGORY_ORDER = ["file","sheet","data","presentation","search","number","message","flag","other"];
 const CATEGORY_NAMES = {
   file:    "파일과 폴더",
   sheet:   "시트와 셀 범위",
+  data:    "피벗 / 차트 / 데이터",
+  presentation: "PowerPoint",
   search:  "검색과 조건",
   number:  "숫자 설정",
   message: "메시지",
@@ -1988,11 +2345,7 @@ function renderControls() {
     groupsByCat[ed.category].push(ed);
   }
 
-  let html = `<div class="notice">
-    <b>안녕하세요!</b> 자동으로 인식한 설정값이에요. 라벨이 어색할 수 있으니,
-    아래쪽 "코드에서 어디?"를 눌러 원본 줄을 한 번 확인하고 바꿔 주세요.
-    의미가 분명하지 않으면 그대로 두는 것이 안전해요.
-  </div>`;
+  let html = "";
 
   // 메인 그룹
   for (const cat of CATEGORY_ORDER) {
