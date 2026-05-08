@@ -5,14 +5,19 @@
 <title>VB 매크로 인터랙티브 에디터</title>
 <style>
 :root {
-  --bg: #1e1e2e;
-  --panel: #2a2a3e;
-  --border: #3a3a4e;
-  --text: #e4e4e7;
-  --muted: #9999aa;
-  --accent: #7aa2f7;
-  --highlight: #f7768e;
-  --good: #9ece6a;
+  --bg: #0f1419;
+  --bg-2: #161b22;
+  --panel: #1c232c;
+  --panel-2: #232b36;
+  --border: #2d3540;
+  --text: #e6edf3;
+  --muted: #8b949e;
+  --dim: #6e7681;
+  --accent: #58a6ff;
+  --accent-2: #79c0ff;
+  --warn: #f0883e;
+  --good: #3fb950;
+  --danger: #f85149;
 }
 * { box-sizing: border-box; }
 html, body { height: 100%; }
@@ -23,22 +28,34 @@ body {
   color: var(--text);
   display: flex;
   flex-direction: column;
+  font-size: 14px;
 }
+
 header {
-  padding: 10px 18px;
+  padding: 14px 22px;
   background: var(--panel);
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 16px;
 }
-header h1 { margin: 0; font-size: 15px; font-weight: 600; }
-header .hint { font-size: 11px; color: var(--muted); }
+header .brand { display: flex; align-items: baseline; gap: 12px; }
+header h1 { margin: 0; font-size: 16px; font-weight: 700; letter-spacing: -0.2px; }
+header .tag {
+  font-size: 11px;
+  color: var(--good);
+  background: rgba(63, 185, 80, 0.12);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+header .hint { font-size: 12px; color: var(--muted); }
+
 main {
   flex: 1;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
   gap: 1px;
   background: var(--border);
   overflow: hidden;
@@ -51,7 +68,7 @@ main {
   min-width: 0;
 }
 .panel-header {
-  padding: 8px 14px;
+  padding: 10px 16px;
   background: var(--panel);
   font-size: 12px;
   color: var(--muted);
@@ -60,8 +77,76 @@ main {
   justify-content: space-between;
   align-items: center;
   gap: 8px;
+  min-height: 42px;
 }
-.panel-header .title { font-weight: 600; color: var(--text); }
+.panel-header .title {
+  font-weight: 700;
+  color: var(--text);
+  font-size: 13px;
+  letter-spacing: -0.1px;
+}
+
+/* 좌측: 코드 패널 */
+#summary {
+  background: var(--bg-2);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 16px;
+  font-size: 13px;
+  line-height: 1.65;
+  max-height: 38%;
+  overflow-y: auto;
+}
+#summary .empty-summary {
+  color: var(--dim);
+  font-size: 12px;
+  text-align: center;
+  padding: 14px 0;
+}
+#summary .summary-card {
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed var(--border);
+}
+#summary .summary-card:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+#summary .sub-title {
+  font-weight: 700;
+  color: var(--accent-2);
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+#summary .sub-title .ko {
+  color: var(--muted);
+  font-weight: 400;
+  font-size: 12px;
+  margin-left: 6px;
+}
+#summary .sub-desc {
+  color: var(--muted);
+  font-size: 12px;
+  font-style: italic;
+  margin-bottom: 6px;
+}
+#summary ul {
+  margin: 4px 0 0;
+  padding-left: 18px;
+  color: var(--text);
+}
+#summary ul li {
+  font-size: 12.5px;
+  margin-bottom: 2px;
+  line-height: 1.55;
+}
+#summary ul li .src {
+  color: var(--dim);
+  font-family: "JetBrains Mono", "D2Coding", "Consolas", monospace;
+  font-size: 11px;
+  margin-left: 4px;
+}
+
 #src {
   flex: 1;
   background: var(--bg);
@@ -71,69 +156,107 @@ main {
   padding: 14px 16px;
   font-family: "JetBrains Mono", "D2Coding", "Consolas", monospace;
   font-size: 13px;
-  line-height: 1.6;
+  line-height: 1.65;
   resize: none;
   white-space: pre;
   overflow: auto;
   tab-size: 4;
 }
+
+/* 우측: 컨트롤 패널 */
 #controls {
   flex: 1;
   overflow-y: auto;
-  padding: 12px 14px;
+  padding: 14px 16px;
 }
+.notice {
+  background: rgba(88, 166, 255, 0.08);
+  border: 1px solid rgba(88, 166, 255, 0.25);
+  color: var(--text);
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  margin-bottom: 14px;
+}
+.notice b { color: var(--accent-2); }
+.notice.warn {
+  background: rgba(240, 136, 62, 0.07);
+  border-color: rgba(240, 136, 62, 0.3);
+}
+.notice.warn b { color: var(--warn); }
+
 .empty {
   color: var(--muted);
   font-size: 13px;
   text-align: center;
-  padding: 36px 18px;
+  padding: 40px 18px;
   line-height: 1.7;
 }
 .empty code {
   background: var(--panel);
-  padding: 1px 5px;
+  padding: 1px 6px;
   border-radius: 3px;
   font-size: 12px;
+  color: var(--accent-2);
 }
+
 .sub-group {
-  margin-bottom: 14px;
+  margin-bottom: 16px;
+  background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 8px;
   overflow: hidden;
 }
 .sub-header {
-  padding: 8px 12px;
-  background: var(--panel);
+  padding: 10px 14px;
+  background: var(--panel-2);
   font-size: 12px;
-  font-weight: 600;
-  color: var(--accent);
+  font-weight: 700;
+  color: var(--accent-2);
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
 }
-.sub-header .count { color: var(--muted); font-weight: 400; }
+.sub-header .count {
+  color: var(--muted);
+  font-weight: 400;
+  font-size: 11px;
+}
+
 .widget {
-  padding: 10px 12px;
+  padding: 12px 14px;
   border-top: 1px solid var(--border);
 }
+.widget:first-child { border-top: none; }
 .widget .label {
-  font-size: 12.5px;
-  margin-bottom: 6px;
+  font-size: 13px;
+  margin-bottom: 8px;
   color: var(--text);
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  font-weight: 600;
 }
-.widget .kind {
+.widget .label .kind {
   font-size: 10px;
   background: var(--border);
   color: var(--muted);
-  padding: 1px 6px;
-  border-radius: 3px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-weight: 500;
 }
+.widget .label .changed-mark {
+  font-size: 10px;
+  color: var(--accent);
+  margin-left: auto;
+}
+.widget .label .changed-mark.hidden { display: none; }
 .widget .control {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 .widget input[type="text"],
 .widget input[type="number"],
@@ -141,8 +264,8 @@ main {
   background: var(--bg);
   border: 1px solid var(--border);
   color: var(--text);
-  padding: 5px 8px;
-  border-radius: 4px;
+  padding: 7px 10px;
+  border-radius: 5px;
   font-family: inherit;
   font-size: 13px;
   outline: none;
@@ -151,33 +274,42 @@ main {
 .widget input[type="text"]:focus,
 .widget input[type="number"]:focus,
 .widget select:focus { border-color: var(--accent); }
-.widget input[type="range"] { flex: 1; accent-color: var(--accent); }
-.widget input[type="number"].compact { width: 90px; }
+.widget input[type="range"] {
+  flex: 1;
+  accent-color: var(--accent);
+}
+.widget input[type="number"].compact { width: 100px; flex: 0 0 100px; }
 .widget .context {
   font-size: 11px;
-  color: var(--muted);
-  margin-top: 6px;
+  color: var(--dim);
+  margin-top: 8px;
   font-family: "JetBrains Mono", "D2Coding", "Consolas", monospace;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  padding-top: 6px;
+  border-top: 1px dashed var(--border);
 }
-.widget.changed { background: rgba(122, 162, 247, 0.07); }
-.widget.changed .label::before {
-  content: "●";
-  color: var(--accent);
-  font-size: 10px;
+.widget .original {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 4px;
 }
+.widget .original .ov { color: var(--dim); text-decoration: line-through; }
+.widget .original .nv { color: var(--accent-2); font-weight: 600; }
+.widget.changed { background: rgba(88, 166, 255, 0.04); }
+
 button {
   background: var(--accent);
-  color: var(--bg);
+  color: #0d1117;
   border: none;
-  padding: 5px 11px;
-  border-radius: 4px;
+  padding: 7px 14px;
+  border-radius: 5px;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   font-family: inherit;
+  transition: filter 0.1s;
 }
 button:hover { filter: brightness(1.1); }
 button.secondary {
@@ -185,37 +317,50 @@ button.secondary {
   color: var(--text);
 }
 button:disabled { opacity: 0.4; cursor: not-allowed; }
+
 .status {
-  padding: 6px 14px;
+  padding: 7px 16px;
   font-size: 11px;
   color: var(--muted);
   background: var(--panel);
   border-top: 1px solid var(--border);
+  min-height: 28px;
 }
-.status.error { color: var(--highlight); }
+.status.error { color: var(--danger); }
 .status.good { color: var(--good); }
-@media (max-width: 800px) {
+
+@media (max-width: 850px) {
   main { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
+  #summary { max-height: 30%; }
 }
 </style>
 </head>
 <body>
 <header>
-  <h1>VB 매크로 인터랙티브 에디터</h1>
-  <span class="hint">코드를 붙여넣으면 자동으로 위젯이 만들어집니다 · 100% 로컬 동작 · 외부 통신 없음</span>
+  <div class="brand">
+    <h1>VB 매크로 인터랙티브 에디터</h1>
+    <span class="tag">100% 로컬 · 외부 통신 없음</span>
+  </div>
+  <span class="hint">코드를 붙여넣으면 한국어 요약과 안전한 설정값을 자동으로 보여줍니다</span>
 </header>
 <main>
   <section class="panel">
     <div class="panel-header">
+      <span class="title">코드 요약</span>
+    </div>
+    <div id="summary">
+      <div class="empty-summary">아래에 VBA 코드를 붙여넣으면 여기에 한국어 요약이 나타납니다</div>
+    </div>
+    <div class="panel-header" style="border-top: 1px solid var(--border);">
       <span class="title">VBA 코드</span>
       <button id="copy-btn">전체 복사</button>
     </div>
-    <textarea id="src" spellcheck="false" placeholder="여기에 VBA 코드를 붙여넣으세요. 예시는 samples/ 폴더 참고."></textarea>
+    <textarea id="src" spellcheck="false" placeholder="여기에 VBA 코드를 붙여넣으세요."></textarea>
     <div class="status" id="status">대기 중 — 코드를 붙여넣으세요</div>
   </section>
   <section class="panel">
     <div class="panel-header">
-      <span class="title">컨트롤</span>
+      <span class="title">설정 (안전한 값만 표시)</span>
       <button id="reset-btn" class="secondary" disabled>모두 초기화</button>
     </div>
     <div id="controls">
@@ -224,9 +369,8 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
         편집 가능한 값들이 여기에 자동으로 나타납니다.<br><br>
         인식 패턴 예시:<br>
         <code>Const LAST_ROW = 100</code><br>
-        <code>For i = 2 To 100</code><br>
-        <code>Sheets("매출")</code><br>
-        <code>If 금액 &gt; 50000 Then</code>
+        <code>For i = 14 To 100</code><br>
+        <code>Sheets("매출")</code>
       </div>
     </div>
   </section>
@@ -271,6 +415,12 @@ const TERM_KO = {
   enable: "사용", enabled: "사용", disable: "사용안함", disabled: "사용안함",
   flag: "플래그", debug: "디버그", verbose: "상세",
   delay: "지연", interval: "간격", timeout: "제한시간",
+  import: "가져오기", export: "내보내기",
+  copy: "복사", paste: "붙여넣기", move: "이동",
+  open: "열기", close: "닫기", save: "저장",
+  found: "찾은", search: "검색", find: "찾기",
+  bank: "은행", statement: "명세서",
+  pass: "합격", fail: "실패", report: "보고서",
 };
 
 function splitIdent(ident) {
@@ -299,7 +449,7 @@ const KEYWORDS = new Set([
   "if","then","else","elseif","for","to","step","next","while",
   "wend","do","loop","until","with","set","let","as","byref",
   "byval","optional","true","false","and","or","not","mod",
-  "rem","exit","call","new","nothing","redim","preserve",
+  "rem","exit","call","new","nothing","redim","preserve","is",
 ]);
 
 function tokenize(source) {
@@ -312,11 +462,7 @@ function tokenize(source) {
   const n = source.length;
 
   function flushLine(end) {
-    lines.push({
-      start: logicalLineStart,
-      end,
-      tokens: lineTokens,
-    });
+    lines.push({ start: logicalLineStart, end, tokens: lineTokens });
     lineTokens = [];
     logicalLineStart = end + 1;
   }
@@ -325,11 +471,7 @@ function tokenize(source) {
     const c = source[i];
 
     if (c === "\n") {
-      if (inContinuation) {
-        inContinuation = false;
-        i++;
-        continue;
-      }
+      if (inContinuation) { inContinuation = false; i++; continue; }
       flushLine(i);
       i++;
       continue;
@@ -417,8 +559,8 @@ function tokenize(source) {
     }
 
     const two = source.slice(i, i+2);
-    if (two === "<=" || two === ">=" || two === "<>") {
-      const tok = { kind: "op", start: i, end: i+2, raw: two };
+    if (two === "<=" || two === ">=" || two === "<>" || two === ":=") {
+      const tok = { kind: two === ":=" ? "punct" : "op", start: i, end: i+2, raw: two };
       tokens.push(tok); lineTokens.push(tok);
       i += 2;
       continue;
@@ -437,9 +579,7 @@ function tokenize(source) {
     }
     i++;
   }
-  if (lineTokens.length > 0 || logicalLineStart < n) {
-    flushLine(n);
-  }
+  if (lineTokens.length > 0 || logicalLineStart < n) flushLine(n);
   return { tokens, lines, source };
 }
 
@@ -504,6 +644,8 @@ function annotateLines(parsed) {
     const prevToks = prev.tokens.filter(t => t.kind !== "comment");
     if (prevToks.length === 0 && prev.tokens.length > 0 && prev.tokens[0].kind === "comment") {
       const text = prev.tokens[0].raw.replace(/^'\s*|^[Rr][Ee][Mm]\s+/, "").trim();
+      // ===== 또는 ---- 같은 장식선은 건너뜀
+      if (/^[=\-_*#]{3,}/.test(text) || text.length < 1) continue;
       if (text.startsWith("@param")) {
         line.annotation = parseAnnotation(text);
         line.leadingComment = text;
@@ -526,19 +668,30 @@ function parseAnnotation(comment) {
     if (k === "min" || k === "max" || k === "step") {
       const n = Number(v);
       if (!Number.isNaN(n)) ann[k] = n;
-    } else if (k === "options") {
-      ann.options = v.split("|");
-    }
+    } else if (k === "options") ann.options = v.split("|");
   }
   return ann;
 }
 
 // ============================================================
-// 추출기
+// 추출기 (보수적 휴리스틱)
 // ============================================================
 const FUNC_WHITELIST = new Set([
   "sheets","worksheets","workbooks","range","cells","msgbox","inputbox",
 ]);
+
+// "코드 로직"으로 보이는 값은 추출 제외
+function isLikelyCodeLogic(tok) {
+  if (tok.kind === "string") {
+    const v = tok.raw.slice(1, -1);
+    if (v === "" || v === " ") return true;          // 빈/공백 문자열
+  }
+  if (tok.kind === "number") {
+    const n = Number(tok.raw);
+    if (n === 0 || n === 1 || n === -1) return true; // 가드/플래그
+  }
+  return false;
+}
 
 function extract(parsed) {
   const out = [];
@@ -555,12 +708,12 @@ function extract(parsed) {
     };
     const toks = line.tokens;
 
-    // R1: Const NAME [As TYPE] = LITERAL
+    // R1: Const NAME = LITERAL — 가장 신뢰할 수 있는 추출 지점
     if (cls.kind === "decl" && cls.declKind === "const") {
       const eqIdx = toks.findIndex(t => t.kind === "op" && t.raw === "=");
       if (eqIdx >= 0) {
         const lit = pickSingleLiteral(toks, eqIdx + 1, toks.length);
-        if (lit) {
+        if (lit && !(lit.kind === "number" && lit.hex)) {
           const constIdx = toks.findIndex(t => t.kind === "keyword" && t.lower === "const");
           const nameTok = toks[constIdx + 1]?.kind === "ident" ? toks[constIdx + 1] : null;
           const ed = makeEditable(nid(), lit, ctx, nameTok?.raw);
@@ -570,64 +723,72 @@ function extract(parsed) {
       continue;
     }
 
-    // R3: For <var> = <start> To <end> [Step <s>]
+    // R3: For — 끝값만 추출 (시작값/스텝은 보통 코드 인덱싱)
+    // 단, 시작값이 큰 정수(>2)면 함께 추출
     if (cls.kind === "for") {
       const eqIdx = toks.findIndex(t => t.kind === "op" && t.raw === "=");
       const toIdx = toks.findIndex(t => t.kind === "keyword" && t.lower === "to");
       const stepIdx = toks.findIndex(t => t.kind === "keyword" && t.lower === "step");
       const forIdx = toks.findIndex(t => t.kind === "keyword" && t.lower === "for");
       const varTok = forIdx >= 0 && toks[forIdx + 1]?.kind === "ident" ? toks[forIdx + 1] : null;
+
       if (eqIdx >= 0 && toIdx > eqIdx) {
         const startLit = pickSingleLiteral(toks, eqIdx + 1, toIdx);
         const endLit = pickSingleLiteral(toks, toIdx + 1, stepIdx >= 0 ? stepIdx : toks.length);
-        if (startLit) {
-          const ed = makeEditable(nid(), startLit, ctx, varTok?.raw, "시작");
-          if (ed) out.push(ed);
+
+        // 시작값: 3 이상의 정수일 때만 (1, 2는 거의 항상 인덱스)
+        if (startLit && startLit.kind === "number" && !startLit.hex) {
+          const n = Number(startLit.raw);
+          if (Number.isFinite(n) && n >= 3) {
+            const ed = makeEditable(nid(), startLit, ctx, varTok?.raw, "시작 행");
+            if (ed) out.push(ed);
+          }
         }
-        if (endLit) {
-          const ed = makeEditable(nid(), endLit, ctx, varTok?.raw, "끝");
-          if (ed) out.push(ed);
-        }
-        if (stepIdx >= 0) {
-          const stepLit = pickSingleLiteral(toks, stepIdx + 1, toks.length);
-          if (stepLit) {
-            const ed = makeEditable(nid(), stepLit, ctx, varTok?.raw, "증가폭");
+        // 끝값은 일반적으로 추출 (단 너무 작은 정수면 제외 — 열 인덱스 등)
+        if (endLit && endLit.kind === "number" && !endLit.hex) {
+          const n = Number(endLit.raw);
+          // 시작값이 인덱스 같고 끝값도 작으면(≤20) 둘 다 인덱스 루프로 보고 제외
+          const startIsIndex = startLit?.kind === "number" && Number(startLit.raw) <= 2;
+          if (!(startIsIndex && Number.isFinite(n) && n <= 20)) {
+            const ed = makeEditable(nid(), endLit, ctx, varTok?.raw, "끝 값");
             if (ed) out.push(ed);
           }
         }
       }
     }
 
-    // R4: 비교 연산자의 우변 리터럴 (If/ElseIf 라인에서만)
+    // R4: If/ElseIf 비교 우변 리터럴 (단, 0/빈문자열 가드 제외)
     if (cls.kind === "if" || cls.kind === "elseIf") {
       for (let k = 0; k < toks.length - 1; k++) {
         const a = toks[k], b = toks[k+1];
-        if (a.kind === "op" && [">","<",">=","<=","=","<>"].includes(a.raw) &&
-            (b.kind === "number" || b.kind === "string" || b.kind === "bool")) {
-          const lhsLabel = findLhsLabel(toks, k);
-          const ed = makeEditable(nid(), b, ctx, lhsLabel, "비교값");
-          if (ed) out.push(ed);
-        }
+        if (a.kind !== "op") continue;
+        if (![">","<",">=","<=","=","<>"].includes(a.raw)) continue;
+        if (!(b.kind === "number" || b.kind === "string" || b.kind === "bool")) continue;
+        if (isLikelyCodeLogic(b)) continue;
+        const lhsLabel = findLhsLabel(toks, k);
+        const ed = makeEditable(nid(), b, ctx, lhsLabel, "조건값");
+        if (ed) out.push(ed);
       }
     }
 
-    // R5: 화이트리스트 함수의 리터럴 인자 (모든 라인)
+    // R5: 화이트리스트 함수의 리터럴 인자
     extractFunctionArgs(toks, ctx, out, nid);
 
-    // R2 (제한): 단순 할당 ident = literal — leadingComment 또는 annotation이 있을 때만
+    // R2: 단순 할당 ident = literal — 주석/어노테이션 있을 때만
     if (cls.kind === "stmt" && (line.leadingComment || line.annotation)) {
       const t = toks.filter(x => x.kind !== "comment");
       if (t.length === 3 &&
           t[0].kind === "ident" &&
           t[1].kind === "op" && t[1].raw === "=" &&
-          (t[2].kind === "number" || t[2].kind === "string" || t[2].kind === "bool")) {
+          (t[2].kind === "number" || t[2].kind === "string" || t[2].kind === "bool") &&
+          !isLikelyCodeLogic(t[2])) {
         const ed = makeEditable(nid(), t[2], ctx, t[0].raw);
         if (ed) out.push(ed);
       }
     }
   }
 
-  // 동일 range dedup (R3와 R4가 겹치는 경우 등)
+  // 동일 range dedup
   const seen = new Set();
   return out.filter(ed => {
     const key = `${ed.range[0]}-${ed.range[1]}`;
@@ -697,11 +858,20 @@ function extractFunctionArgs(toks, ctx, out, nid) {
     }
     for (let k = 0; k < args.length; k++) {
       const arg = args[k].filter(t => t.kind !== "comment");
-      if (arg.length === 1 && (arg[0].kind === "number" || arg[0].kind === "string")) {
-        const label = funcArgLabel(fname, k);
-        const ed = makeEditable(nid(), arg[0], ctx, null, null, label);
-        if (ed) out.push(ed);
-      }
+      if (arg.length !== 1) continue;
+      const lit = arg[0];
+      if (!(lit.kind === "number" || lit.kind === "string")) continue;
+
+      // 시트/통합문서: 숫자 인자(시트 인덱스) 제외 — 문자열 이름만 의미 있음
+      if ((fname === "sheets" || fname === "worksheets" || fname === "workbooks") && lit.kind === "number") continue;
+      // MsgBox/InputBox: 두 번째 이후 인자의 숫자(상수 코드)는 제외
+      if ((fname === "msgbox" || fname === "inputbox") && k > 0 && lit.kind === "number") continue;
+      // Cells: 인자가 1 또는 0이면 거의 항상 코드 로직
+      if (fname === "cells" && lit.kind === "number" && Number(lit.raw) <= 1) continue;
+
+      const label = funcArgLabel(fname, k);
+      const ed = makeEditable(nid(), lit, ctx, null, null, label);
+      if (ed) out.push(ed);
     }
     i = j;
   }
@@ -712,7 +882,7 @@ function funcArgLabel(fname, idx) {
   if (fname === "workbooks") return "통합문서 이름";
   if (fname === "range") return "셀 범위";
   if (fname === "cells") return idx === 0 ? "행 번호" : "열 번호";
-  if (fname === "msgbox") return idx === 0 ? "메시지" : "옵션";
+  if (fname === "msgbox") return idx === 0 ? "알림 메시지" : "옵션";
   if (fname === "inputbox") return idx === 0 ? "안내문" : (idx === 1 ? "제목" : "기본값");
   return "값";
 }
@@ -732,18 +902,13 @@ function makeEditable(id, tok, ctx, hintIdent, suffix, overrideLabel) {
   }
 
   let label;
-  if (ctx.annotation?.label) {
-    label = ctx.annotation.label;
-  } else if (ctx.leadingComment && !ctx.leadingComment.startsWith("@param")) {
-    label = ctx.leadingComment;
-  } else if (overrideLabel) {
-    label = overrideLabel;
-  } else if (hintIdent) {
+  if (ctx.annotation?.label) label = ctx.annotation.label;
+  else if (ctx.leadingComment && !ctx.leadingComment.startsWith("@param")) label = ctx.leadingComment;
+  else if (overrideLabel) label = overrideLabel;
+  else if (hintIdent) {
     label = identToKorean(hintIdent);
     if (suffix) label += " " + suffix;
-  } else {
-    label = "값";
-  }
+  } else label = "값";
 
   const hint = {
     label,
@@ -764,6 +929,78 @@ function makeEditable(id, tok, ctx, hintIdent, suffix, overrideLabel) {
     context: ctx,
     hint,
   };
+}
+
+// ============================================================
+// 자연어 요약 (룰 기반, LLM 없음)
+// ============================================================
+function summarize(parsed) {
+  const subs = [];
+  let cur = null;
+
+  // 라인 안에서 패턴 매칭
+  function detectActions(line, actions) {
+    const toks = line.tokens.filter(t => t.kind !== "comment");
+    const text = parsed.source.slice(line.start, line.end);
+
+    function has(re) { return re.test(text); }
+
+    if (has(/\bWorkbooks\.Open\b/i)) actions.push({ kind: "open", text: "외부 엑셀 파일을 엽니다" });
+    else if (has(/\bWorkbooks\.Close\b|\.Close\s+SaveChanges/i)) actions.push({ kind: "close", text: "외부 파일을 닫습니다" });
+    if (has(/\bDir\s*\(/i)) actions.push({ kind: "dir", text: "폴더에서 파일을 검색합니다" });
+    if (has(/\.Copy\b/)) actions.push({ kind: "copy", text: "데이터를 복사합니다" });
+    if (has(/\bResize\s*\(.*\)\.Value\s*=/) || has(/\.Range\s*\(.*\)\.Value\s*=\s*\w+Arr\b/)) {
+      actions.push({ kind: "paste", text: "값을 한 번에 붙여넣습니다" });
+    }
+    if (has(/\bMsgBox\b/i)) actions.push({ kind: "msgbox", text: "메시지창을 표시합니다" });
+    if (has(/\bInputBox\b/i)) actions.push({ kind: "input", text: "사용자 입력을 받습니다" });
+    if (has(/\bInStr\s*\(/i)) actions.push({ kind: "search", text: "텍스트를 검색합니다" });
+    if (has(/\bExit\s+Sub\b/i)) actions.push({ kind: "exit", text: "조건에 따라 매크로를 중단합니다" });
+    if (has(/\bScreenUpdating\s*=\s*False/i)) actions.push({ kind: "perf", text: "화면 깜빡임을 막아 속도를 높입니다" });
+    if (has(/\.Sort\b/i)) actions.push({ kind: "sort", text: "정렬합니다" });
+    if (has(/\.AutoFilter\b/i)) actions.push({ kind: "filter", text: "자동 필터를 적용합니다" });
+    if (has(/\.Delete\b/i)) actions.push({ kind: "delete", text: "값/행을 삭제합니다" });
+    if (has(/\.Save\b/i)) actions.push({ kind: "save", text: "저장합니다" });
+  }
+
+  for (const line of parsed.lines) {
+    if (line.classification.kind === "subStart") {
+      const toks = line.tokens.filter(t => t.kind !== "comment");
+      const nameTok = toks.find(t => t.kind === "ident");
+      cur = {
+        name: nameTok?.raw ?? "(이름없음)",
+        koName: identToKorean(nameTok?.raw ?? ""),
+        firstComment: null,
+        actions: [],
+        forCount: 0,
+        ifCount: 0,
+      };
+      subs.push(cur);
+      continue;
+    }
+    if (!cur) continue;
+    if (line.classification.kind === "subEnd") { cur = null; continue; }
+
+    if (!cur.firstComment && line.tokens.length === 1 && line.tokens[0].kind === "comment") {
+      const t = line.tokens[0].raw.replace(/^'\s*|^[Rr][Ee][Mm]\s+/, "").trim();
+      if (t && !/^[=\-_*#]{3,}/.test(t)) cur.firstComment = t;
+    }
+    if (line.classification.kind === "for") cur.forCount++;
+    if (line.classification.kind === "if") cur.ifCount++;
+
+    detectActions(line, cur.actions);
+  }
+
+  // 각 sub의 actions dedup (kind 기준 첫 번째만)
+  for (const s of subs) {
+    const seen = new Set();
+    s.actions = s.actions.filter(a => {
+      if (seen.has(a.kind)) return false;
+      seen.add(a.kind);
+      return true;
+    });
+  }
+  return subs;
 }
 
 // ============================================================
@@ -801,10 +1038,12 @@ const state = {
   source: "",
   editables: [],
   edits: new Map(),
+  summary: [],
 };
 
 const $src = document.getElementById("src");
 const $controls = document.getElementById("controls");
+const $summary = document.getElementById("summary");
 const $status = document.getElementById("status");
 const $copy = document.getElementById("copy-btn");
 const $reset = document.getElementById("reset-btn");
@@ -828,35 +1067,71 @@ function analyze() {
     const parsed = tokenize(state.source);
     annotateLines(parsed);
     state.editables = extract(parsed);
+    state.summary = summarize(parsed);
   } catch (e) {
     console.error(e);
     state.editables = [];
+    state.summary = [];
     setStatus("분석 오류: " + e.message, "error");
     return false;
   }
   return true;
 }
 
+function renderSummary() {
+  if (!state.source.trim()) {
+    $summary.innerHTML = `<div class="empty-summary">아래에 VBA 코드를 붙여넣으면 여기에 한국어 요약이 나타납니다</div>`;
+    return;
+  }
+  if (state.summary.length === 0) {
+    $summary.innerHTML = `<div class="empty-summary">Sub/Function 정의를 찾지 못했습니다</div>`;
+    return;
+  }
+  let html = "";
+  for (const s of state.summary) {
+    html += `<div class="summary-card">
+      <div class="sub-title">${escapeHtml(s.name)}<span class="ko">${escapeHtml(s.koName !== s.name ? s.koName : "")}</span></div>`;
+    if (s.firstComment) {
+      html += `<div class="sub-desc">"${escapeHtml(s.firstComment)}"</div>`;
+    }
+    if (s.actions.length > 0) {
+      html += `<ul>`;
+      for (const a of s.actions) html += `<li>${escapeHtml(a.text)}</li>`;
+      html += `</ul>`;
+    } else {
+      html += `<ul><li style="color:var(--dim)">자동 인식된 동작 없음</li></ul>`;
+    }
+    if (s.forCount > 0 || s.ifCount > 0) {
+      const meta = [];
+      if (s.forCount > 0) meta.push(`반복 ${s.forCount}회`);
+      if (s.ifCount > 0) meta.push(`조건 분기 ${s.ifCount}개`);
+      html += `<div class="src" style="margin-top:6px;color:var(--dim);font-size:11px;">${escapeHtml(meta.join(" · "))}</div>`;
+    }
+    html += `</div>`;
+  }
+  $summary.innerHTML = html;
+}
+
 function renderControls() {
   if (!state.source.trim()) {
     $controls.innerHTML = `<div class="empty">
       좌측에 VBA 코드를 붙여넣으면<br>
-      편집 가능한 값들이 여기에 자동으로 나타납니다.<br><br>
+      안전하게 바꿀 수 있는 값들이 여기에 자동으로 나타납니다.<br><br>
       인식 패턴 예시:<br>
       <code>Const LAST_ROW = 100</code><br>
-      <code>For i = 2 To 100</code><br>
+      <code>For i = 14 To 100</code><br>
       <code>Sheets("매출")</code><br>
       <code>If 금액 &gt; 50000 Then</code>
     </div>`;
     return;
   }
   if (state.editables.length === 0) {
-    $controls.innerHTML = `<div class="empty">
-      편집 가능한 값을 찾지 못했습니다.<br>
-      <code>Const</code>, <code>For ... To</code>, <code>If x &gt; 값</code>,<br>
-      <code>Sheets("...")</code>, <code>Range("...")</code>, <code>Cells(행, 열)</code>,<br>
-      <code>MsgBox "..."</code> 같은 패턴이 있어야 합니다.<br><br>
-      또는 라인 위에 <code>' @param 라벨 min=.. max=..</code><br>를 붙여 명시할 수 있습니다.
+    $controls.innerHTML = `<div class="notice warn">
+      <b>자동으로 인식할 수 있는 설정값이 없습니다.</b><br>
+      이 매크로는 사용자가 만질 만한 명확한 값(상수, 시트명 등)을 갖고 있지 않거나,
+      값이 변수로 표현되어 있어 자동 인식이 어렵습니다.<br><br>
+      코드를 작성한 사람(또는 AI)에게 다음처럼 표시해 달라고 요청해 보세요:<br>
+      <code style="display:inline-block;margin-top:6px;padding:6px 8px;background:rgba(0,0,0,0.2);border-radius:4px;font-size:12px;">' @param 마지막행 min=1 max=10000<br>Const LAST_ROW = 100</code>
     </div>`;
     return;
   }
@@ -868,10 +1143,15 @@ function renderControls() {
     groups.get(sub).push(ed);
   }
 
-  let html = "";
+  let html = `<div class="notice">
+    <b>자동 인식된 값들입니다.</b> 라벨이 어색한 것은 코드의 변수명에서 추측된 것이니,
+    오른쪽 아래 코드 라인을 보고 의미를 확인한 뒤 바꾸세요.
+    의미가 분명하지 않으면 그대로 두는 것이 안전합니다.
+  </div>`;
+
   for (const [sub, eds] of groups) {
     html += `<div class="sub-group">
-      <div class="sub-header"><span>${escapeHtml(sub)}</span><span class="count">${eds.length}개</span></div>`;
+      <div class="sub-header"><span>${escapeHtml(sub)}</span><span class="count">${eds.length}개 설정</span></div>`;
     for (const ed of eds) html += renderWidget(ed);
     html += `</div>`;
   }
@@ -888,7 +1168,7 @@ function getCurrentValue(ed) {
 }
 
 function renderWidget(ed) {
-  const changed = state.edits.has(ed.id) ? "changed" : "";
+  const changed = state.edits.has(ed.id);
   const value = getCurrentValue(ed);
   const kindLabel = { number: "숫자", string: "문자열", bool: "참/거짓" }[ed.kind];
   let control = "";
@@ -917,15 +1197,26 @@ function renderWidget(ed) {
       control = `<div class="control"><input type="text" data-id="${ed.id}" data-role="text" value="${escapeHtml(value)}"></div>`;
     }
   } else if (ed.kind === "bool") {
-    control = `<div class="control"><label style="display:flex;align-items:center;gap:6px;font-size:13px;">
+    control = `<div class="control"><label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
       <input type="checkbox" data-id="${ed.id}" data-role="check" ${value ? "checked" : ""}>
-      ${value ? "True (참)" : "False (거짓)"}
+      <span data-role="check-label">${value ? "True (참)" : "False (거짓)"}</span>
     </label></div>`;
   }
 
-  return `<div class="widget ${changed}" data-widget-id="${ed.id}">
-    <div class="label">${escapeHtml(ed.hint.label)} <span class="kind">${kindLabel}</span></div>
+  const origDisplay = ed.kind === "string" ? `"${escapeHtml(ed.value)}"` : escapeHtml(String(ed.value));
+  const newDisplay = ed.kind === "string" ? `"${escapeHtml(value)}"` : escapeHtml(String(value));
+  const diffLine = changed
+    ? `<div class="original">원본: <span class="ov">${origDisplay}</span> → <span class="nv">${newDisplay}</span></div>`
+    : "";
+
+  return `<div class="widget ${changed ? "changed" : ""}" data-widget-id="${ed.id}">
+    <div class="label">
+      <span>${escapeHtml(ed.hint.label)}</span>
+      <span class="kind">${kindLabel}</span>
+      <span class="changed-mark ${changed ? "" : "hidden"}">● 변경됨</span>
+    </div>
     ${control}
+    ${diffLine}
     <div class="context" title="${escapeHtml(ed.context.line)}">${escapeHtml(ed.context.line.trim())}</div>
   </div>`;
 }
@@ -946,14 +1237,16 @@ function bindWidget(ed) {
     if (num) num.addEventListener("input", () => sync(num.value));
   } else if (ed.kind === "string") {
     const t = root.querySelector('[data-role="text"]') || root.querySelector('[data-role="select"]');
-    if (t) t.addEventListener("input", () => setEdit(ed, t.value));
-    if (t) t.addEventListener("change", () => setEdit(ed, t.value));
+    if (t) {
+      t.addEventListener("input", () => setEdit(ed, t.value));
+      t.addEventListener("change", () => setEdit(ed, t.value));
+    }
   } else if (ed.kind === "bool") {
     const c = root.querySelector('[data-role="check"]');
+    const lbl = root.querySelector('[data-role="check-label"]');
     if (c) c.addEventListener("change", () => {
       setEdit(ed, c.checked);
-      const lbl = c.parentElement;
-      if (lbl) lbl.lastChild.textContent = c.checked ? " True (참)" : " False (거짓)";
+      if (lbl) lbl.textContent = c.checked ? "True (참)" : "False (거짓)";
     });
   }
 }
@@ -964,25 +1257,42 @@ function setEdit(ed, value) {
   else if (ed.kind === "bool") same = Boolean(value) === Boolean(ed.value);
   else same = String(value) === String(ed.value);
 
-  if (same) {
-    state.edits.delete(ed.id);
-  } else {
-    state.edits.set(ed.id, valueToRaw(ed.kind, value));
-  }
+  if (same) state.edits.delete(ed.id);
+  else state.edits.set(ed.id, valueToRaw(ed.kind, value));
 
   const newSrc = renderSource(state.source, state.editables, state.edits);
   suppressInput = true;
   $src.value = newSrc;
   suppressInput = false;
 
+  // 변경된 위젯만 다시 그리지 않고, 효율을 위해 부분 갱신
   const root = $controls.querySelector(`[data-widget-id="${ed.id}"]`);
-  if (root) root.classList.toggle("changed", state.edits.has(ed.id));
+  if (root) {
+    root.classList.toggle("changed", state.edits.has(ed.id));
+    const mark = root.querySelector(".changed-mark");
+    if (mark) mark.classList.toggle("hidden", !state.edits.has(ed.id));
+
+    // diff 라인 갱신
+    const oldDiff = root.querySelector(".original");
+    if (state.edits.has(ed.id)) {
+      const origDisplay = ed.kind === "string" ? `"${escapeHtml(ed.value)}"` : escapeHtml(String(ed.value));
+      const newDisplay = ed.kind === "string" ? `"${escapeHtml(getCurrentValue(ed))}"` : escapeHtml(String(getCurrentValue(ed)));
+      const html = `<div class="original">원본: <span class="ov">${origDisplay}</span> → <span class="nv">${newDisplay}</span></div>`;
+      if (oldDiff) oldDiff.outerHTML = html;
+      else {
+        const ctx = root.querySelector(".context");
+        if (ctx) ctx.insertAdjacentHTML("beforebegin", html);
+      }
+    } else {
+      if (oldDiff) oldDiff.remove();
+    }
+  }
 
   $reset.disabled = state.edits.size === 0;
   setStatus(
     state.edits.size === 0
-      ? `${state.editables.length}개 항목 추출됨 · 변경 없음`
-      : `${state.editables.length}개 추출 · ${state.edits.size}개 변경됨`,
+      ? `${state.editables.length}개 설정 인식됨 · 변경 없음`
+      : `${state.editables.length}개 설정 · ${state.edits.size}개 변경됨`,
     "good"
   );
 }
@@ -995,12 +1305,14 @@ $src.addEventListener("input", () => {
     state.source = $src.value;
     state.edits.clear();
     $reset.disabled = true;
-    if (!analyze()) { renderControls(); return; }
+    if (!analyze()) { renderSummary(); renderControls(); return; }
+    renderSummary();
     renderControls();
     if (!state.source.trim()) {
       setStatus("대기 중 — 코드를 붙여넣으세요");
     } else {
-      setStatus(`${state.editables.length}개 항목 추출됨`, "good");
+      const n = state.editables.length;
+      setStatus(n > 0 ? `${n}개 설정 인식됨` : "설정값 자동 인식 실패", n > 0 ? "good" : "");
     }
   }, 300);
 });
