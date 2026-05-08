@@ -433,41 +433,20 @@ select.text-input {
 .diff-chip .nv { color: var(--accent-strong); font-weight: 700; }
 .diff-chip .arr { color: var(--dim); }
 
-.setting-context {
-  margin-top: 9px;
-  font-size: 11px;
-}
-.setting-context summary {
+.line-role {
+  margin-top: 10px;
+  padding-top: 9px;
+  border-top: 1px dashed var(--border-soft);
+  font-size: 11.5px;
   color: var(--muted);
-  cursor: pointer;
-  list-style: none;
-  user-select: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 11px;
+  line-height: 1.55;
+  font-style: italic;
 }
-.setting-context summary::-webkit-details-marker { display: none; }
-.setting-context summary::before {
-  content: "▸";
-  font-size: 9px;
-  transition: transform 0.15s;
+.line-role::before {
+  content: "이 줄의 역할 · ";
+  font-style: normal;
   color: var(--dim);
-}
-.setting-context[open] summary::before { transform: rotate(90deg); }
-.setting-context code {
-  display: block;
-  margin-top: 6px;
-  padding: 8px 11px;
-  background: var(--surface-2);
-  border-radius: 8px;
-  font-family: "D2Coding", "JetBrains Mono", "Consolas", monospace;
-  font-size: 11px;
-  color: var(--text);
-  white-space: pre-wrap;
-  word-break: break-all;
-  border-left: 3px solid var(--border);
-  line-height: 1.6;
+  font-weight: 600;
 }
 
 .advanced {
@@ -1372,10 +1351,120 @@ function makeEditable(opts) {
 
   ed.label       = labelFor(ed);
   ed.description = describe(ed);
+  ed.lineRole    = lineRole(ed);
   ed.tier        = classifyTier(ed);
   ed.category    = categorize(ed);
   ed.hint        = computeHint(ed);
   return ed;
+}
+
+// ============================================================
+// 줄 역할 설명 (이 줄이 무슨 일을 하는 코드인지)
+// ============================================================
+function lineRole(ed) {
+  const raw = ed.context.line;
+  if (!raw) return null;
+  const line = raw.trim().replace(/\s*'[^\n]*$/, "").trim();
+  if (!line) return null;
+
+  // 시작/끝
+  if (/^(Public\s+|Private\s+|Static\s+|Friend\s+)*(Sub|Function)\b/i.test(line)) return "이 매크로(혹은 함수)의 시작 줄이에요";
+  if (/^End\s+(Sub|Function)\b/i.test(line)) return "여기서 매크로가 끝나요";
+  if (/^End\s+If\b/i.test(line)) return "조건문 묶음이 여기서 끝나요";
+  if (/^End\s+With\b/i.test(line)) return "With 묶음이 여기서 끝나요";
+  if (/^Next\b/i.test(line)) return "반복의 끝이에요. 다음 회차로 넘어가요";
+  if (/^Wend\b|^Loop\b/i.test(line)) return "반복의 끝이에요";
+  if (/^Else\s*$/i.test(line)) return "위 조건이 맞지 않을 때 동작하는 부분이에요";
+  if (/^Exit\s+Sub\b/i.test(line)) return "여기서 매크로를 즉시 끝내요";
+  if (/^Exit\s+For\b/i.test(line)) return "반복을 즉시 멈추고 빠져나가요";
+  if (/^Exit\s+Function\b/i.test(line)) return "함수에서 빠져나가요";
+
+  // 선언
+  if (/^Dim\b/i.test(line)) {
+    if (/As\s+Workbook\b/i.test(line)) return "통합문서(엑셀 파일)를 담을 변수를 미리 만들어 둬요";
+    if (/As\s+Worksheet\b/i.test(line)) return "시트를 담을 변수를 미리 만들어 둬요";
+    if (/As\s+(Long|Integer|Double|Single|Byte)\b/i.test(line)) return "숫자를 담을 변수를 미리 만들어 둬요";
+    if (/As\s+String\b/i.test(line)) return "텍스트를 담을 변수를 미리 만들어 둬요";
+    if (/As\s+Boolean\b/i.test(line)) return "참/거짓을 담을 변수를 미리 만들어 둬요";
+    if (/As\s+Variant\b/i.test(line)) return "여러 값(배열 등)을 담을 변수를 미리 만들어 둬요";
+    if (/As\s+Range\b/i.test(line)) return "셀 범위를 담을 변수를 미리 만들어 둬요";
+    return "사용할 변수를 미리 만들어 두는 줄이에요";
+  }
+  if (/^(Public\s+|Private\s+)?Const\b/i.test(line)) return "이 매크로 안에서 고정으로 쓸 값을 정해 두는 줄이에요";
+
+  // Set
+  if (/^Set\s+\w+\s*=\s*ActiveSheet\b/i.test(line)) return "지금 작업 중인 시트를 변수에 담아 둬요";
+  if (/^Set\s+\w+\s*=\s*ActiveWorkbook\b/i.test(line)) return "지금 열려 있는 통합문서를 변수에 담아 둬요";
+  if (/^Set\s+\w+\s*=\s*ThisWorkbook\b/i.test(line)) return "지금 매크로가 들어 있는 파일을 변수에 담아 둬요";
+  if (/^Set\s+\w+\s*=\s*Workbooks\.Open/i.test(line)) return "외부 엑셀 파일을 열어서 변수에 담아 둬요";
+  if (/^Set\s+\w+\s*=.*\.(Sheets|Worksheets)\s*\(/i.test(line)) return "통합문서 안의 특정 시트를 변수에 담아 둬요";
+  if (/^Set\s+\w+\s*=.*\.Range\s*\(/i.test(line)) return "특정 셀 범위를 변수에 담아 둬요";
+  if (/^Set\s+/i.test(line)) return "객체(시트, 파일, 셀 등)를 변수에 담아 두는 줄이에요";
+
+  // 화면 갱신 / 옵션
+  if (/Application\.ScreenUpdating\s*=\s*False/i.test(line)) return "매크로가 빠르게 끝나도록 화면 깜빡임을 잠깐 멈춰요";
+  if (/Application\.ScreenUpdating\s*=\s*True/i.test(line)) return "잠시 멈췄던 화면 갱신을 다시 켜요";
+  if (/Application\.Calculation\s*=/i.test(line)) return "엑셀의 자동 계산 모드를 바꿔요";
+  if (/Application\.DisplayAlerts\s*=\s*False/i.test(line)) return "확인 메시지가 뜨지 않도록 잠깐 꺼요";
+  if (/Application\.DisplayAlerts\s*=\s*True/i.test(line)) return "확인 메시지를 다시 켜요";
+
+  // 닫기 / 저장 (Set 패턴보다 뒤, 일반 호출)
+  if (/\.Close\s+SaveChanges\s*:?=?\s*False/i.test(line)) return "변경 사항을 저장하지 않고 파일을 닫아요";
+  if (/\.Close\s+SaveChanges\s*:?=?\s*True/i.test(line)) return "변경 사항을 저장하고 파일을 닫아요";
+  if (/\.Close\b/i.test(line)) return "파일을 닫아요";
+  if (/\.SaveAs\b/i.test(line)) return "파일을 다른 이름이나 위치로 저장해요";
+  if (/\.Save\b/i.test(line)) return "파일을 저장해요";
+
+  // For/While/If
+  if (/^For\s+Each\b/i.test(line)) return "여러 항목을 하나씩 차례로 살펴보는 반복이에요";
+  if (/^For\b/i.test(line)) return "여기서부터 같은 동작을 행마다 차례로 반복해요";
+  if (/^If\b.+\bThen\s*$/i.test(line)) return "이 조건이 맞을 때만 아래 줄들을 실행해요";
+  if (/^If\b.+\bThen\b/i.test(line)) return "조건이 맞으면 같은 줄에 적힌 동작을 실행해요";
+  if (/^ElseIf\b/i.test(line)) return "위 조건이 아닐 때 또 다른 조건을 검사해요";
+  if (/^Do\s+While\b/i.test(line)) return "조건이 맞는 동안 계속 반복해요";
+  if (/^Do\s+Until\b/i.test(line)) return "조건이 맞을 때까지 계속 반복해요";
+  if (/^While\b/i.test(line)) return "조건이 맞는 동안 계속 반복해요";
+  if (/^With\b/i.test(line)) return "이 객체에 대한 작업들을 묶어서 처리해요";
+
+  // 메시지/입력
+  if (/\bMsgBox\b/i.test(line)) return "메시지를 화면에 띄워서 사용자에게 알려요";
+  if (/\bInputBox\b/i.test(line)) return "사용자에게 입력 창을 띄워 값을 받아요";
+
+  // 파일/Dir
+  if (/=\s*Dir\s*\(/i.test(line)) return "폴더에서 패턴에 맞는 파일을 찾아 변수에 담아요";
+  if (/=\s*ThisWorkbook\.Path/i.test(line) || /=\s*ActiveWorkbook\.Path/i.test(line)) return "지금 매크로가 들어있는 폴더의 경로를 변수에 담아요";
+
+  // Range/Cell 패턴 (대입 / 읽기)
+  if (/=\s*\w+\.Range\s*\(.*\)\.Value\s*$/i.test(line)) return "지정한 셀 범위의 값을 읽어와 변수에 담아요";
+  if (/=\s*\w+\.Cells\s*\(.*\)\.Value\s*$/i.test(line)) return "특정 셀의 값을 읽어와 변수에 담아요";
+  if (/\.Range\s*\(.*\)\.Resize\s*\(.*\)\.Value\s*=/i.test(line)) return "현재 시트에 맞춰 값들을 한 번에 써넣어요";
+  if (/\.Range\s*\(.*\)\.Value\s*=/i.test(line)) return "지정한 셀에 값을 써넣어요";
+  if (/\.Cells\s*\(.*\)\.Value\s*=/i.test(line)) return "특정 셀에 값을 써넣어요";
+  if (/\.Range\s*\(.*\)\.Copy\b/i.test(line)) return "셀 범위를 복사해요";
+  if (/\.Range\s*\(.*\)\.Sort\b/i.test(line)) return "셀 범위를 정렬해요";
+  if (/\.Range\s*\(.*\)\.AutoFilter\b/i.test(line)) return "자동 필터를 켜거나 적용해요";
+  if (/\.Range\s*\(.*\)\.Find\s*\(/i.test(line)) return "셀 범위 안에서 값을 찾아요";
+  if (/\.Range\s*\(.*\)\.Delete\b/i.test(line)) return "셀 범위를 삭제해요";
+  if (/\.Rows\s*\(.*\)\.Delete\b/i.test(line)) return "행을 삭제해요";
+  if (/\.Columns\s*\(.*\)\.Delete\b/i.test(line)) return "열을 삭제해요";
+  if (/\.PasteSpecial\b/i.test(line)) return "복사한 내용을 특별한 방식으로 붙여넣어요";
+
+  // InStr (검색)
+  if (/\bInStr\s*\(/i.test(line)) return "텍스트 안에서 단어를 찾는 줄이에요";
+
+  // Call
+  if (/^Call\b/i.test(line)) return "다른 함수(Sub)를 호출해요";
+
+  // 일반 할당
+  if (/^\w+\s*=\s*0\s*$/i.test(line)) return "변수 값을 0으로 초기화해요";
+  if (/^\w+\s*=\s*""\s*$/.test(line)) return "변수를 빈 텍스트로 초기화해요";
+  if (/^\w+\s*=\s*True\b/i.test(line)) return "이 값을 '참(켜짐)'으로 설정해요";
+  if (/^\w+\s*=\s*False\b/i.test(line)) return "이 값을 '거짓(꺼짐)'으로 설정해요";
+  if (/^\w+\s*=\s*\w+\s*-\s*1\s*$/.test(line)) return "이전 위치(현재 위치 - 1)를 변수에 저장해요";
+  if (/^\w+\s*=\s*\w+\s*\+\s*1\s*$/.test(line)) return "다음 위치(현재 위치 + 1)를 변수에 저장해요";
+  if (/^\w+\s*=/i.test(line)) return "변수에 값을 저장하는 줄이에요";
+
+  return "이 줄에서 위 값이 사용돼요";
 }
 
 // ============================================================
@@ -1995,6 +2084,10 @@ function renderWidget(ed) {
     ? `<div class="setting-desc">${escapeHtml(ed.description)}</div>`
     : "";
 
+  const roleLine = ed.lineRole
+    ? `<div class="line-role">${escapeHtml(ed.lineRole)}</div>`
+    : "";
+
   return `<div class="card ${changed ? "changed" : ""}" data-widget-id="${ed.id}">
     <div class="setting-label">
       <span>${escapeHtml(ed.label)}</span>
@@ -2004,10 +2097,7 @@ function renderWidget(ed) {
     ${descLine}
     ${control}
     <div data-role="diff-slot">${diffLine}</div>
-    <details class="setting-context">
-      <summary>코드에서 어디?</summary>
-      <code>${escapeHtml(ed.context.line.trim())}</code>
-    </details>
+    ${roleLine}
   </div>`;
 }
 
